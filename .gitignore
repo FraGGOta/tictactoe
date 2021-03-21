@@ -31,5 +31,7 @@
 *.out
 *.app
 
-bin/*
-build/*
+server/bin/*
+server/build/*
+client/bin/*
+client/build/*
