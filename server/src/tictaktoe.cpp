@@ -20,15 +20,15 @@ void *thread_handler(void *sock)
     int row;
     int col;
 
-    bool is_avl = false;
-    bool is_val_1 = false;
-    bool is_val_2 = false;
-    
-    int game_over = 0;
-
     while(1)
     {
         pthread_mutex_lock(&mutex);
+
+        bool is_avl = false;
+        bool is_val_1 = false;
+        bool is_val_2 = false;
+    
+        int game_over = 0;
 
         if(game_over_validate()) 
         {
@@ -44,14 +44,9 @@ void *thread_handler(void *sock)
 
                 send(new_sock, &game_over, sizeof(game_over), 0);
             }
-
+          
             init_game_field();
 
-            is_avl = false;
-            is_val_1 = false;
-            is_val_2 = false;
-
-            game_over = 0;
             movement = 0;
 
             break;
