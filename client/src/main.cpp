@@ -6,7 +6,6 @@ extern char player;
 extern char winner;
 
 extern int move;
-
 extern int sock;
 
 int main(int argc, char const **argv)
@@ -27,7 +26,7 @@ int main(int argc, char const **argv)
    int game_over = 0;
 
 	while(1)
-    {
+    { 
         recv(sock, &game_over, sizeof(game_over), 0);
 
         if (game_over == 1)

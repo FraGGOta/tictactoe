@@ -7,7 +7,89 @@ char winner;
 
 int movement = 0;
 
-int listener, sock;
+int listener;
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+void *thread_handler(void *sock)
+{
+     pthread_mutex_init(&mutex, NULL);
+    
+    int new_sock = *(int *) sock;
+
+    int row;
+    int col;
+
+    bool is_avl = false;
+    bool is_val_1 = false;
+    bool is_val_2 = false;
+    
+    int game_over = 0;
+
+    while(1)
+    {
+        pthread_mutex_lock(&mutex);
+
+        if(game_over_validate()) 
+        {
+            if (movement == 9)
+            {
+                game_over = 2;
+
+                send(new_sock, &game_over, sizeof(game_over), 0);
+            }
+            else
+            {
+                game_over = 1;
+
+                send(new_sock, &game_over, sizeof(game_over), 0);
+            }
+
+            init_game_field();
+
+            is_avl = false;
+            is_val_1 = false;
+            is_val_2 = false;
+
+            game_over = 0;
+            movement = 0;
+
+            break;
+
+        }
+        else
+        {
+            send(new_sock, &game_over, sizeof(game_over), 0);
+        }
+
+        do
+        {
+            recv(new_sock, &row, sizeof(row), 0);
+            recv(new_sock, &col, sizeof(col), 0);
+        
+            is_val_1 = border_validate(row); 
+            is_val_2 = border_validate(col); 
+            is_avl = avalible_cell_validate(row - 1, col - 1);
+
+            send(new_sock, &is_val_1, sizeof(is_val_1), 0);
+            send(new_sock, &is_val_2, sizeof(is_val_2), 0);
+            send(new_sock, &is_avl, sizeof(is_avl), 0);
+        }
+        while(!is_val_1 || !is_val_2  || !is_avl);
+
+        board[row - 1][col - 1] = player;
+
+        player = player == 'X' ? 'O' : 'X';
+    
+        ++movement;
+
+        pthread_mutex_unlock(&mutex);
+    }
+
+     pthread_mutex_destroy(&mutex);
+
+    return 0;
+}
 
 void socket_settings(void)
 {
@@ -44,7 +126,7 @@ void socket_settings(void)
 
     printf( "Server port id: [%d]\n", ntohs(addr.sin_port));
 
-    listen(listener, 1);
+    listen(listener, 2);
 }
 
 bool avalible_cell_validate(int row, int col)
