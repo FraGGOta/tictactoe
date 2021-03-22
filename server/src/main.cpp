@@ -1,20 +1,16 @@
 #include "tictaktoe.hpp"
 
-extern char board[3][3];
-
-extern char player;
-extern char winner;
-
-extern int movement;
 extern int listener;
 
 int main()
 {	
 	socket_settings();
 
+    pthread_t pid;
+
 	int sock;
 
-	pthread_t pid;
+    vector<int> clients;
 
 	while(1)
     {
@@ -26,7 +22,9 @@ int main()
             exit(1);
         }
 
-        if(pthread_create(&pid, NULL, thread_handler, (void *) &sock) < 0)
+        clients.push_back(sock);
+
+        if(pthread_create(&pid, NULL, thread_handler, (void *) &clients) < 0)
     	{
         	perror("could not create thread");
 

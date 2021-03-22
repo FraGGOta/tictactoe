@@ -11,20 +11,21 @@ int listener;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-void *thread_handler(void *sock)
+void *thread_handler(void *clients)
 {
-     pthread_mutex_init(&mutex, NULL);
-    
-    int new_sock = *(int *) sock;
+    pthread_mutex_init(&mutex, NULL);
 
-    int row;
-    int col;
+    int row, col;
+
+    vector<int> new_clients = *(vector<int> *) clients;
+
+    int curr_sock = new_clients[new_clients.size() - 1];
+
+    int other_sock = (curr_sock == new_clients[0]) ? new_clients[0] + 1 : new_clients[0];
 
     while(1)
     {
-        pthread_mutex_lock(&mutex);
-
-        bool is_avl = false;
+        bool is_val_3 = false;
         bool is_val_1 = false;
         bool is_val_2 = false;
     
@@ -35,14 +36,18 @@ void *thread_handler(void *sock)
             if (movement == 9)
             {
                 game_over = 2;
+                
+                 sleep(5);
 
-                send(new_sock, &game_over, sizeof(game_over), 0);
+                send(curr_sock, &game_over, sizeof(game_over), 0);
             }
             else
             {
                 game_over = 1;
 
-                send(new_sock, &game_over, sizeof(game_over), 0);
+                sleep(5);
+
+                send(curr_sock, &game_over, sizeof(game_over), 0);
             }
           
             init_game_field();
@@ -54,31 +59,37 @@ void *thread_handler(void *sock)
         }
         else
         {
-            send(new_sock, &game_over, sizeof(game_over), 0);
+            sleep(5);
+
+            send(curr_sock, &game_over, sizeof(game_over), 0);
         }
 
         do
         {
-            recv(new_sock, &row, sizeof(row), 0);
-            recv(new_sock, &col, sizeof(col), 0);
-        
+            recv(curr_sock, &row, sizeof(row), 0);
+            recv(curr_sock, &col, sizeof(col), 0);
+
             is_val_1 = border_validate(row); 
             is_val_2 = border_validate(col); 
-            is_avl = avalible_cell_validate(row - 1, col - 1);
+            is_val_3 = avalible_cell_validate(row - 1, col - 1);
 
-            send(new_sock, &is_val_1, sizeof(is_val_1), 0);
-            send(new_sock, &is_val_2, sizeof(is_val_2), 0);
-            send(new_sock, &is_avl, sizeof(is_avl), 0);
+            send(curr_sock, &is_val_1, sizeof(is_val_1), 0);
+            send(curr_sock, &is_val_2, sizeof(is_val_2), 0);
+            send(curr_sock, &is_val_3, sizeof(is_val_3), 0);
+
         }
-        while(!is_val_1 || !is_val_2  || !is_avl);
+        while(!is_val_1 || !is_val_2  || !is_val_3);
 
         board[row - 1][col - 1] = player;
+
+        sleep(5);
+
+        send(other_sock, &row, sizeof(row), 0);
+        send(other_sock, &col, sizeof(col), 0);
 
         player = player == 'X' ? 'O' : 'X';
     
         ++movement;
-
-        pthread_mutex_unlock(&mutex);
     }
 
      pthread_mutex_destroy(&mutex);
