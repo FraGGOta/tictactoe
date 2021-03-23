@@ -13,6 +13,7 @@
 using namespace std;
 
 void socket_settings(char const *serv_id, uint16_t serv_port);
+void client_handler(void);
 void init_game_field(void);
 void fill_game_field(int i);
 void print_game_board(void);
