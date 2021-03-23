@@ -2,9 +2,6 @@
 
 char board[3][3];
 
-char player = 'X';
-char winner;
-
 int sock;
 
 void socket_settings(char const *serv_id, uint16_t serv_port)
@@ -52,5 +49,24 @@ void fill_game_field(int i)
         cout << board[i][j] << "\t";
     }
     cout << endl;
+}
+
+void print_game_board(void)
+{
+     cout << "\t";
+
+    for(int i = 0 ; i < 3 ; ++i)
+    {
+        cout << i + 1 << "\t";
+    }
+
+    cout << endl;
+
+    for(int i = 0 ; i < 3 ; ++i)
+    {
+        cout << i + 1 << "\t";
+
+        fill_game_field(i);
+    }
 }
 

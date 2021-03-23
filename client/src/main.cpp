@@ -2,10 +2,6 @@
 
 extern char board[3][3];
 
-extern char player;
-extern char winner;
-
-extern int move;
 extern int sock;
 
 int main(int argc, char const **argv)
@@ -16,13 +12,38 @@ int main(int argc, char const **argv)
 
     init_game_field();
 
+    char sign, winner;
+
     int row, col;
+
+    int movement = 0, game_over = 0;
 
     bool is_val_3 = false;
     bool is_val_1 = false;
     bool is_val_2 = false;
+    bool is_avl_sign = true;
+    bool is_end = false;
+
+   system("clear");
    
-   int game_over = 0;
+   cout << "Choose X/O" << endl << endl;
+
+    do
+    {
+        cin >> sign;
+
+        sign = toupper(sign);
+
+        send(sock, &sign, sizeof(sign), 0);
+
+        recv(sock, &is_avl_sign, sizeof(is_avl_sign), 0);
+
+        if (!is_avl_sign)
+        {
+            cout << endl << sign << " has already been choosen" << endl << endl;
+        }
+    }
+    while(!is_avl_sign);
 
 	while(1)
     { 
@@ -30,25 +51,13 @@ int main(int argc, char const **argv)
 
         if (game_over == 1)
         {
-           system("clear");
+            system("clear");
 
-            cout << "\t";
+            print_game_board();
 
-            for(int i = 0 ; i < 3 ; ++i)
-            {
-                cout << i + 1 << "\t";
-            }
+            recv(sock, &winner, sizeof(winner), 0);
 
-            cout << endl;
-
-            for(int i = 0 ; i < 3 ; ++i)
-            {
-                cout << i + 1 << "\t";
-
-                fill_game_field(i);
-            }
-
-            cout << endl << "Player " << winner << " win" << endl;
+            cout << endl << "Player " << winner << " won" << endl;
 
             return 0;
         }
@@ -56,51 +65,28 @@ int main(int argc, char const **argv)
         {
             system("clear");
 
-            cout << "\t";
-
-            for(int i = 0 ; i < 3 ; ++i)
-            {
-                cout << i + 1 << "\t";
-            }
-
-            cout << endl;
-
-            for(int i = 0 ; i < 3 ; ++i)
-            {
-                cout << i + 1 << "\t";
-
-                fill_game_field(i);
-            }
+            print_game_board();
 
             cout << endl << "Draw" << endl;
 
             return 0;
         }
 
-        winner = player == 'X' ? 'X' : 'O';
-
        system("clear");
 
-        cout << "It's " << player << "'s turn" << endl << endl;
+        cout << sign << " field" << endl << endl;
 
-        cout << "\t";
-
-        for(int i = 0 ; i < 3 ; ++i)
-        {
-            cout << i + 1 << "\t";
-        }
-
-        cout << endl;
-
-        for(int i = 0 ; i < 3 ; ++i)
-        {
-            cout << i + 1 << "\t";
-
-            fill_game_field(i);
-        }
-
+        print_game_board();
+       
        do
        {
+            recv(sock, &is_end, sizeof(is_end), 0);
+
+            if (is_end)
+            {
+                break;
+            }
+
             cout << endl;
 
             cin >> row >> col;
@@ -114,24 +100,37 @@ int main(int argc, char const **argv)
 
             if (!is_val_1 || !is_val_2)
             {
-               cout << "Please pick a value between 1 and 3" << endl;
+               cout << endl << "Please pick a value between 1 and 3" << endl;
             }
 
             if (!is_val_3)
             {
-                cout << "That move has already been done" << endl;
+                cout << endl << "That move has already been done" << endl;
             }
         }
         while(!is_val_1 || !is_val_2  || !is_val_3);
 
-        board[row - 1][col - 1] = player;
+        if (is_end)
+        {   
+            recv(sock, &row, sizeof(row), 0);
+            recv(sock, &col, sizeof(col), 0);
+        
+            board[row - 1][col - 1] = (sign == 'X') ? 'O' : 'X';
+            
+            continue;
+        }
 
-        recv(sock, &row, sizeof(row), 0);
-        recv(sock, &col, sizeof(col), 0);
+        board[row - 1][col - 1] = sign;
 
-        board[row - 1][col - 1] = player;
+        movement += 2;
 
-        player = player == 'X' ? 'O' : 'X';
+        if (movement <= 8)
+        {
+            recv(sock, &row, sizeof(row), 0);
+            recv(sock, &col, sizeof(col), 0);
+        
+            board[row - 1][col - 1] = (sign == 'X') ? 'O' : 'X';
+        }     
     }
 	
 	return 0;
