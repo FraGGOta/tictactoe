@@ -2,15 +2,17 @@
 
 char board[3][3];
 
-char winner;
+char winner = -1;
 
 int movement;
 
 int listener;
 
+char current_player = 'X';
+
 vector<char> signs;
 
-bool is_draw = false;
+// bool is_draw = false;
 
 void socket_settings(void)
 {
@@ -54,8 +56,6 @@ void *thread_handler(void *clients)
 {
     char sign;
 
-    int row, col;
-
     vector<int> new_clients = *(vector<int> *) clients;
 
     int curr_sock = new_clients[new_clients.size() - 1];
@@ -65,38 +65,29 @@ void *thread_handler(void *clients)
     bool is_avl_sign = false;
 
     if (new_clients.size() % 2)
-    {
         other_sock = curr_sock + 1;
-    }
     else if(!(new_clients.size() % 2))
-    {
         other_sock = curr_sock - 1;
-    }
 
-    do
+    do //Coosing the sign
     {
         recv(curr_sock, &sign, sizeof(sign), 0);
 
         if (!(signs.size() % 2))
         {
             is_avl_sign = true;
-
             signs.push_back(sign);
-
             send(curr_sock, &is_avl_sign, sizeof(is_avl_sign), 0);
         }
         else if (signs[signs.size() - 1] == sign)
         {
             is_avl_sign = false;
-
             send(curr_sock, &is_avl_sign, sizeof(is_avl_sign), 0);
         }
         else
         {
             is_avl_sign = true;
-
             signs.push_back(sign);
-
             send(curr_sock, &is_avl_sign, sizeof(is_avl_sign), 0);
         }
     }
@@ -105,181 +96,108 @@ void *thread_handler(void *clients)
     init_game_field();
 
     movement = 0;
+
+    while(signs.size() != 2) //Waiting for opponent
+    {
+        sleep(1);
+    }
+    bool begin_game = true;
+    send(curr_sock, &begin_game, sizeof(bool), 0);
+
+    char not_over = -1;
+    send(curr_sock, &not_over, sizeof(char), 0); //Game sin't over
     
-    while(1)
+    //Send empty move to player to start the game
+    int row = -1, col = -1;
+    if (sign == current_player)
+    {
+        send(curr_sock, &winner, sizeof(char), 0);
+        send(curr_sock, &row, sizeof(row), 0);
+        send(curr_sock, &col, sizeof(col), 0);
+    }
+    
+    while(1) //Main game
     {
         bool is_val_1 = false;
         bool is_val_2 = false;
-        bool is_val_3 = false;
-        bool is_end = false;
-     
-        int game_over = 0;
-
-        if(game_over_validate()) 
+        do //Getting move
         {
-            if (is_draw)
-            {   
-                game_over = 2;
-                
-                sleep(5);
-
-                send(curr_sock, &game_over, sizeof(game_over), 0);
-
-                is_draw = false;
-            }
-            else
-            {
-                game_over = 1;
-
-                sleep(5);
-
-                send(curr_sock, &game_over, sizeof(game_over), 0);
-                send(curr_sock, &winner, sizeof(winner), 0);
-            }
-
-            break;
-
-        }
-        else
-        {
-            sleep(5);
-
-            send(curr_sock, &game_over, sizeof(game_over), 0);
-        }
-
-        do
-        {
-            if (movement == 9)
-            {
-                is_end = true;
-
-                send(curr_sock, &is_end, sizeof(is_end), 0);
-
-                break;
-            }
-            else
-            {
-                send(curr_sock, &is_end, sizeof(is_end), 0);
-            }
-
             recv(curr_sock, &row, sizeof(row), 0);
             recv(curr_sock, &col, sizeof(col), 0);
 
-            is_val_1 = border_validate(row); 
-            is_val_2 = border_validate(col); 
-            is_val_3 = avalible_cell_validate(row - 1, col - 1);
+            if (row == 0 && col == 0)
+                return 0;
+            
+            is_val_1 = border_validate(row) && border_validate(col);
+            is_val_2 = avalible_cell_validate(row - 1, col - 1) ? is_val_1 : true;
 
             send(curr_sock, &is_val_1, sizeof(is_val_1), 0);
             send(curr_sock, &is_val_2, sizeof(is_val_2), 0);
-            send(curr_sock, &is_val_3, sizeof(is_val_3), 0);
-
         }
-        while(!is_val_1 || !is_val_2  || !is_val_3);
-
-        if (is_end)
-        {   
-            continue;
-        }
+        while(!is_val_1 || !is_val_2);
 
         board[row - 1][col - 1] = sign;
 
         ++movement;
 
-        sleep(5);
+        game_over_validate(); //Check if game ended
+        send(curr_sock, &winner, sizeof(char), 0);
 
+        send(other_sock, &winner, sizeof(char), 0);
         send(other_sock, &row, sizeof(row), 0);
         send(other_sock, &col, sizeof(col), 0);
+
+        if (winner != -1)
+            break;
+
+        current_player = 'X' ? current_player == 'O' : 'O';
     }
 
     return 0;
 }
 
-
 bool avalible_cell_validate(int row, int col)
 {
-	if (board[row][col] == 'X' || board[row][col] == 'O') 
-	{
+	if (board[row][col] == 'X' || board[row][col] == 'O')
 	    return false;
-	}
-
 	return true;
 }
-
 
 bool border_validate(int number)
 {
 	if(number >= 1 && number <= 3)
-	{
 		return true;
-	}
 	else
-	{
 		return  false;
-	}
 }
 
-bool game_over_validate()
+void game_over_validate()
 {
     if (movement >= 5)
     {
         if (board[0][0] == board[0][1] && board[0][1] == board[0][2] && board[0][1] != ' ')
-        {
             winner = board[0][1];
-
-            return true;
-        }
-         else if (board[1][0] == board[1][1] && board[1][1] == board[1][2] && board[1][1] != ' ')
-        {
+        else if (board[1][0] == board[1][1] && board[1][1] == board[1][2] && board[1][1] != ' ')
             winner = board[1][1];
-
-            return true;
-        }
         else if (board[2][0] == board[2][1] && board[2][1] == board[2][2] && board[2][1] != ' ')
-        {
             winner = board[2][1];
-
-            return true;
-        }
         else if (board[0][0] == board[1][0] && board[1][0] == board[2][0] && board[1][0] != ' ')
-        {
             winner = board[1][0];
-
-            return true;
-        }
         else if (board[0][1] == board[1][1] && board[1][1] == board[2][1] && board[1][1] != ' ')
-        {
             winner = board[1][1];
-
-            return true;
-        }
         else if (board[0][2] == board[1][2] && board[1][2] == board[2][2] && board[1][2] != ' ')
-        {
             winner = board[1][2];
-
-            return true;
-        }
         else if (board[0][0] == board[1][1] && board[1][1] == board[2][2] && board[1][1] != ' ')
-        {
             winner = board[1][1];
-
-            return true;
-        }
         else if (board[0][2] == board[1][1] && board[1][1] == board[2][0] && board[1][1] != ' ')
-        {
             winner = board[1][1];
-
-            return true;
-        }
+        return;
     }
 
     if (movement == 9)
     {
-        is_draw = true;
-
-        return true;
+        winner = 0;
     }
-
-	return false;
 }
 
 void init_game_field()

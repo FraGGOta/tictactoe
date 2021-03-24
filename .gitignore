@@ -35,3 +35,4 @@ server/bin/*
 server/build/*
 client/bin/*
 client/build/*
+.vscode/*
