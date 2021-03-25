@@ -190,7 +190,7 @@ char game_over_validate()
             return board[1][1];
     }   
 
-    if (movement >= 9)
+    if (movement == 9)
         return 0;
 
     return -1;
