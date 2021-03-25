@@ -15,6 +15,6 @@ void *thread_handler(void *clients);
 void socket_settings(void);
 bool avalible_cell_validate(int row, int col);
 bool border_validate(int number);
-void game_over_validate(void);
+char game_over_validate(void);
 void init_game_field(void);
 

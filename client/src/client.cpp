@@ -111,7 +111,7 @@ void client_handler(void)
             send(sock, &col, sizeof(col), 0);
             break;
         }
-       
+
         do //Doing move
         {
             cin >> row >> col;
