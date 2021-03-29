@@ -4,12 +4,12 @@ char board[3][3];
 
 int movement;
 
-int listener;
-
 vector<char> signs;
 
-void socket_settings(void)
+int main_server_socket_settings(void)
 {
+    int listener;
+
     uint32_t length;
 
     struct sockaddr_in addr;
@@ -44,15 +44,69 @@ void socket_settings(void)
     printf( "Server port id: [%d]\n", ntohs(addr.sin_port));
 
     listen(listener, 2);
+
+    return listener;
 }
 
-void *thread_handler(void *clients)
+int opt_server_socket_settings(char const *serv_id, uint16_t serv_port)
+{
+    struct sockaddr_in addr;
+    struct hostent *hp;
+    
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+  
+    if(sock < 0)
+    {
+        perror("socket");
+        exit(1);
+    }
+
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(serv_port); 
+    
+    hp = gethostbyname(serv_id);
+    
+    bcopy( hp->h_addr, &addr.sin_addr, hp->h_length);
+
+    if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+    {
+        perror("connect");
+        exit(2);
+    }
+
+    return sock;
+}
+
+void opt_server_handler(int sock)
+{
+    int row = -1, col = -1;
+
+    char sign;
+
+    while(1)
+    {
+        init_game_field();
+
+        recv(sock, &row, sizeof(row), 0);
+        recv(sock, &col, sizeof(col), 0);
+        recv(sock, &sign, sizeof(sign), 0);
+
+        board[row - 1][col - 1] = sign;
+
+        cout << board[row - 1][col - 1] << endl;
+    }
+}
+
+void *main_server_handler(void *socks)
 {
     char sign;
 
     char current_player = 'X';
 
-    vector<int> new_clients = *(vector<int> *) clients;
+    sockets new_socks = *(sockets *) socks;
+
+    vector<int> new_clients = *new_socks.clients;
+    vector<int> new_opt_servs = *new_socks.opt_servs;
 
     int curr_sock = new_clients[new_clients.size() - 1];
 
@@ -98,10 +152,10 @@ void *thread_handler(void *clients)
         sleep(1);
     }
     bool begin_game = true;
-    send(curr_sock, &begin_game, sizeof(bool), 0);
+    send(curr_sock, &begin_game, sizeof(begin_game), 0);
 
     char not_over = -1;
-    send(curr_sock, &not_over, sizeof(char), 0); //Game sin't over
+    send(curr_sock, &not_over, sizeof(not_over), 0); //Game sin't over
     
     //Send empty move to player to start the game
     int row = -1, col = -1;
@@ -135,12 +189,19 @@ void *thread_handler(void *clients)
 
         board[row - 1][col - 1] = sign;
 
+        for (int i : new_opt_servs)
+        {
+            send(i, &row, sizeof(row), 0);
+            send(i, &col, sizeof(col), 0);
+            send(i, &sign, sizeof(sign), 0);
+        }
+        
         ++movement;
 
         char winner = game_over_validate(); //Check if game ended
-        send(curr_sock, &winner, sizeof(char), 0);
+        send(curr_sock, &winner, sizeof(winner), 0);
 
-        send(other_sock, &winner, sizeof(char), 0);
+        send(other_sock, &winner, sizeof(winner), 0);
         send(other_sock, &row, sizeof(row), 0);
         send(other_sock, &col, sizeof(col), 0);
 

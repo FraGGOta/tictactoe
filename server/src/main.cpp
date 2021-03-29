@@ -1,41 +1,63 @@
 #include "tictaktoe.hpp"
 
-extern int listener;
-
-int main()
+int main(int argc, char const **argv)
 {	
-	socket_settings();
+    int listener, sock;
+
+    vector<int> clients;
+    vector<int> opt_servs;
+
+    sockets socks;
 
     pthread_t pid;
 
-	int sock;
-
-    vector<int> clients;
-
-	while(1)
+    switch(argc)
     {
-        sock = accept(listener, NULL, NULL);
-       
-        if(sock < 0)
-        {
-            perror("accept");
-            exit(1);
-        }
+        case 1:
+            listener = main_server_socket_settings();
 
-        clients.push_back(sock);
+        	while(1)
+            {
+                while(opt_servs.size() != 2)
+                {
+                    sock = accept(listener, NULL, NULL);
+                   
+                    if(sock < 0)
+                    {
+                        perror("accept");
+                        exit(1);
+                    }
 
-        if(pthread_create(&pid, NULL, thread_handler, (void *) &clients) < 0)
-    	{
-        	perror("could not create thread");
+                    opt_servs.push_back(sock);
+                }
 
-        	exit(2);
-    	}
+                sock = accept(listener, NULL, NULL);
+               
+                if(sock < 0)
+                {
+                    perror("accept");
+                    exit(1);
+                }
 
-        pthread_detach(pid);
-    
+                clients.push_back(sock);
+                
+                socks.clients = &clients;
+                socks.opt_servs = &opt_servs;
+
+                if(pthread_create(&pid, NULL, main_server_handler, (void *) &socks) < 0)
+            	{
+                	perror("could not create thread");
+
+                	exit(2);
+            	}
+
+                pthread_detach(pid);
+            }
+
+        default:
+            sock = opt_server_socket_settings(argv[1], atoi(argv[2]));
+            opt_server_handler(sock);
     }	
-
-    close(sock);
 
 	return 0;
 }

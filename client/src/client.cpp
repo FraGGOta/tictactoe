@@ -2,14 +2,12 @@
 
 char board[3][3];
 
-int sock;
-
-void socket_settings(char const *serv_id, uint16_t serv_port)
+int socket_settings(char const *serv_id, uint16_t serv_port)
 {
     struct sockaddr_in addr;
     struct hostent *hp;
 	
-	sock = socket(AF_INET, SOCK_STREAM, 0);
+	int sock = socket(AF_INET, SOCK_STREAM, 0);
   
     if(sock < 0)
     {
@@ -29,9 +27,11 @@ void socket_settings(char const *serv_id, uint16_t serv_port)
         perror("connect");
         exit(2);
     }
+
+    return sock;
 }
 
-void client_handler(void)
+void client_handler(int sock)
 {
     init_game_field();
 
