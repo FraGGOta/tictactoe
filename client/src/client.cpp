@@ -2,11 +2,10 @@
 
 char board[3][3];
 
-int socket_settings(char const *serv_id, uint16_t serv_port)
+int socket_settings(uint16_t port)
 {
     struct sockaddr_in addr;
-    struct hostent *hp;
-	
+
 	int sock = socket(AF_INET, SOCK_STREAM, 0);
   
     if(sock < 0)
@@ -16,11 +15,8 @@ int socket_settings(char const *serv_id, uint16_t serv_port)
     }
 
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(serv_port); 
-    
-    hp = gethostbyname(serv_id);
-    
-    bcopy( hp->h_addr, &addr.sin_addr, hp->h_length);
+     addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
@@ -33,7 +29,7 @@ int socket_settings(char const *serv_id, uint16_t serv_port)
 
 void client_handler(int sock)
 {
-    init_game_field();
+    int bytes_read;
 
     char sign;
 
@@ -41,7 +37,9 @@ void client_handler(int sock)
     
     bool is_val_1 = false;
     bool is_val_2 = false;
-    bool is_avl_sign = true;
+    bool is_avl_sign = false;
+
+    init_game_field();
 
     system("clear");
    
@@ -55,7 +53,15 @@ void client_handler(int sock)
 
         send(sock, &sign, sizeof(sign), 0);
 
-        recv(sock, &is_avl_sign, sizeof(is_avl_sign), 0);
+        bytes_read = recv(sock, &is_avl_sign, sizeof(is_avl_sign), 0);
+
+        if (!bytes_read)
+        {
+            sock = socket_settings(3426);
+
+            send(sock, &sign, sizeof(sign), 0);
+            recv(sock, &is_avl_sign, sizeof(is_avl_sign), 0);
+        }
 
         if (!is_avl_sign)
         {
@@ -65,19 +71,41 @@ void client_handler(int sock)
     while(!is_avl_sign);
 
     cout << "Waiting for opponent" << endl;
+    
     bool begin_game = false;
-    recv(sock, &begin_game, sizeof(is_avl_sign), 0);
+   
+    bytes_read = recv(sock, &begin_game, sizeof(is_avl_sign), 0);
+
+    if (!bytes_read)
+    {
+        sock = socket_settings(3426);
+
+        recv(sock, &begin_game, sizeof(is_avl_sign), 0);
+    }
+
     system("clear");
 
     while(1) //Main game
     {
         system("clear");
+        
         cout << sign << " field" << endl << endl;
+        
         print_game_board();
+        
         cout << endl;
 
         char winner = -1;
-        recv(sock, &winner, sizeof(char), 0);
+       
+        bytes_read = recv(sock, &winner, sizeof(winner), 0);
+
+        if (!bytes_read)
+        {
+            sock = socket_settings(3426);
+
+            recv(sock, &winner, sizeof(winner), 0);
+        }
+        
         if (winner != -1)
         {
             if (winner == 0)
@@ -88,15 +116,43 @@ void client_handler(int sock)
         }
 
         cout << "Waiting for opponent" << endl;
-        recv(sock, &winner, sizeof(char), 0);
-        recv(sock, &row, sizeof(row), 0);
-        recv(sock, &col, sizeof(col), 0);
+        
+        bytes_read = recv(sock, &winner, sizeof(winner), 0);
+
+        if (!bytes_read)
+        {
+            sock = socket_settings(3426);
+
+            recv(sock, &winner, sizeof(char), 0);
+        }
+
+        bytes_read = recv(sock, &row, sizeof(row), 0);
+
+        if (!bytes_read)
+        {
+            sock = socket_settings(3426);
+
+            recv(sock, &row, sizeof(row), 0);
+        }
+
+        bytes_read = recv(sock, &col, sizeof(col), 0);
+
+        if (!bytes_read)
+        {
+            sock = socket_settings(3426);
+
+            recv(sock, &col, sizeof(col), 0);
+        }
+       
         if (row != -1 && col != -1)
             board[row - 1][col - 1] = (sign == 'X') ? 'O' : 'X';
 
         system("clear");
+        
         cout << sign << " field" << endl << endl;
+        
         print_game_board();
+        
         cout << endl;
 
         if (winner != -1)
@@ -105,10 +161,13 @@ void client_handler(int sock)
                 cout << "Draw!" << endl;
             else
                 cout << winner << " won!" << endl;
+          
             row = 0;
             col = 0;
+           
             send(sock, &row, sizeof(row), 0);
             send(sock, &col, sizeof(col), 0);
+           
             break;
         }
 
@@ -125,8 +184,26 @@ void client_handler(int sock)
                continue;
             }
         
-            recv(sock, &is_val_1, sizeof(is_val_1), 0);
-            recv(sock, &is_val_2, sizeof(is_val_2), 0);
+             bytes_read = recv(sock, &is_val_1, sizeof(is_val_1), 0);
+
+            if (!bytes_read)
+            {
+                sock = socket_settings(3426);
+
+                send(sock, &row, sizeof(row), 0);
+                send(sock, &col, sizeof(col), 0);
+
+                recv(sock, &is_val_1, sizeof(is_val_1), 0);
+            }
+
+            bytes_read = recv(sock, &is_val_2, sizeof(is_val_2), 0);
+
+            if (!bytes_read)
+            {
+                sock = socket_settings(3426);
+
+                recv(sock, &is_val_2, sizeof(is_val_2), 0);
+            }
 
             if (!is_val_1)
                cout << endl << "Please pick a value between 1 and 3" << endl;
