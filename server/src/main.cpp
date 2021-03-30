@@ -74,7 +74,7 @@ int main(int argc, char const **argv)
                         perror("accept");
                         exit(1);
                     }
-
+       
                     clients.push_back(sock);
 
                     if(pthread_create(&pid, NULL, opt_server_1_handler, (void *)&clients) < 0)
