@@ -76,7 +76,7 @@ int main(int argc, char const **argv)
                     }
        
                     clients.push_back(sock);
-                    cout << clients[0] << " " << clients[1] << endl;
+                    //cout << clients[0] << " " << clients[1] << endl;
                     if(pthread_create(&pid, NULL, opt_server_1_handler, (void *)&clients) < 0)
                     {
                         perror("could not create thread");
