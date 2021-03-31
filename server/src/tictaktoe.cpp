@@ -115,10 +115,15 @@ void listen_main_server_by_opt_server_2(int sock)
     }
 }
 
-void *opt_server_1_handler(void *clients)
-{     
+void check_client(int sock)
+{
     int status = 1;
+    recv(sock, &status, sizeof(status), 0);
+    send(sock, &status, sizeof(status), 0);
+}
 
+void *opt_server_1_handler(void *clients)
+{
     char sign;
 
     current_player = 'X';
@@ -134,15 +139,15 @@ void *opt_server_1_handler(void *clients)
     bool is_avl_sign = false;
 
     if (new_clients.size() % 2)
-        other_sock = curr_sock + 2;
+        other_sock = curr_sock + 1;
     else if(!(new_clients.size() % 2))
-        other_sock = curr_sock - 2;
+        other_sock = curr_sock - 1;
 
-   // if (!movement)
-    //{
+    if (!movement)
+    {
         do //Coosing the sign
         {
-            send(curr_sock, &status, sizeof(status), 0);
+            check_client(curr_sock);
             recv(curr_sock, &sign, sizeof(sign), 0);
 
             if (!(signs.size() % 2))
@@ -170,7 +175,7 @@ void *opt_server_1_handler(void *clients)
             sleep(1);
         }
         bool begin_game = true;
-        send(curr_sock, &status, sizeof(status), 0);
+        check_client(curr_sock);
         send(curr_sock, &begin_game, sizeof(begin_game), 0);
 
         char not_over = -1;
@@ -180,12 +185,12 @@ void *opt_server_1_handler(void *clients)
         if (sign == current_player)
         {
             char winner = -1;
-            send(curr_sock, &status, sizeof(status), 0);
+            check_client(curr_sock);
             send(curr_sock, &winner, sizeof(winner), 0);
             send(curr_sock, &row, sizeof(row), 0);
             send(curr_sock, &col, sizeof(col), 0);
         }
-    //}
+    }
 
     while(1) //Main game
     {
@@ -198,7 +203,7 @@ void *opt_server_1_handler(void *clients)
                 sleep(1);
             }
 
-            send(curr_sock, &status, sizeof(status), 0);
+            check_client(curr_sock);
             recv(curr_sock, &row, sizeof(row), 0);
             recv(curr_sock, &col, sizeof(col), 0);
 
@@ -220,7 +225,7 @@ void *opt_server_1_handler(void *clients)
         char winner = game_over_validate(); //Check if game ended
 
         send(curr_sock, &winner, sizeof(winner), 0);
-        send(other_sock, &status, sizeof(status), 0);
+        check_client(other_sock);
         send(other_sock, &winner, sizeof(winner), 0);
         send(other_sock, &row, sizeof(row), 0);
         send(other_sock, &col, sizeof(col), 0);
@@ -246,8 +251,6 @@ void *opt_server_2_handler(void *clients)
 
 void *main_server_handler(void *socks)
 {
-    int status = 0;
-
     char sign;
 
     current_player = 'X';
@@ -270,7 +273,7 @@ void *main_server_handler(void *socks)
 
     do //Coosing the sign
     {
-        send(curr_sock, &status, sizeof(status), 0);
+        check_client(curr_sock);
         recv(curr_sock, &sign, sizeof(sign), 0);
 
         if (!(signs.size() % 2))
@@ -303,7 +306,7 @@ void *main_server_handler(void *socks)
     }
     bool begin_game = true;
 
-    send(curr_sock, &status, sizeof(status), 0);
+    check_client(curr_sock);
     send(curr_sock, &begin_game, sizeof(begin_game), 0);
 
     char not_over = -1;
@@ -314,7 +317,7 @@ void *main_server_handler(void *socks)
     if (sign == current_player)
     {
         char winner = -1;
-        send(curr_sock, &status, sizeof(status), 0);
+        check_client(curr_sock);
         send(curr_sock, &winner, sizeof(char), 0);
         send(curr_sock, &row, sizeof(row), 0);
         send(curr_sock, &col, sizeof(col), 0);
@@ -330,7 +333,7 @@ void *main_server_handler(void *socks)
             {
                 sleep(1);
             }
-            send(curr_sock, &status, sizeof(status), 0);
+            check_client(curr_sock);
             recv(curr_sock, &row, sizeof(row), 0);
             recv(curr_sock, &col, sizeof(col), 0);
 
@@ -360,7 +363,7 @@ void *main_server_handler(void *socks)
         char winner = game_over_validate(); //Check if game ended
         
         send(curr_sock, &winner, sizeof(winner), 0);
-        send(other_sock, &status, sizeof(status), 0);
+        check_client(other_sock);
         send(other_sock, &winner, sizeof(winner), 0);
         send(other_sock, &row, sizeof(row), 0);
         send(other_sock, &col, sizeof(col), 0);
@@ -368,7 +371,7 @@ void *main_server_handler(void *socks)
         if (winner != -1)
             break;
 
-       // current_player == 'X' ? current_player = 'O' : 'X';
+        // current_player = current_player == 'X' ? 'O' : 'X';
          
         if (current_player == 'X')
             current_player = 'O';

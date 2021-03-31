@@ -28,3 +28,5 @@ bool border_validate(int number);
 char game_over_validate(void);
 void init_game_field(void);
 
+void check_client(int sock);
+

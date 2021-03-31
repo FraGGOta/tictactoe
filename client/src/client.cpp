@@ -27,10 +27,20 @@ int socket_settings(uint16_t port)
     return sock;
 }
 
+int check_server(int sock)
+{
+    int status;
+    send(sock, &status, sizeof(status), 0);
+    int bytes_read = recv(sock, &status, sizeof(status), 0);
+
+    if (!bytes_read)
+        return socket_settings(3426);
+    
+    return sock;
+}
+
 void client_handler(int sock)
 {
-    int bytes_read, status;
-
     char sign;
 
     int row = -1, col = -1;
@@ -41,7 +51,7 @@ void client_handler(int sock)
 
     init_game_field();
 
-    system("clear");
+    //system("clear");
    
     cout << "Choose X/O" << endl << endl;
 
@@ -51,10 +61,10 @@ void client_handler(int sock)
 
         sign = toupper(sign);
 
-        bytes_read = recv(sock, &status, sizeof(status), 0);
-
-        if (!bytes_read)
-            sock = socket_settings(3426);
+        int new_sock = check_server(sock);
+        if (new_sock != sock)
+            new_sock = check_server(new_sock);
+        sock = new_sock;
 
         send(sock, &sign, sizeof(sign), 0);
 
@@ -69,20 +79,17 @@ void client_handler(int sock)
 
     cout << "Waiting for opponent" << endl;
 
-    bytes_read = recv(sock, &status, sizeof(status), 0);
-     
-    if (!bytes_read)
-        sock = socket_settings(3426);
+    sock = check_server(sock);
     
     bool begin_game = false;
    
     recv(sock, &begin_game, sizeof(begin_game), 0);
 
-    system("clear");
+    //system("clear");
 
     while(1) //Main game
     {
-        system("clear");
+        //system("clear");
         
         cout << sign << " field" << endl << endl;
         
@@ -105,10 +112,7 @@ void client_handler(int sock)
 
         cout << "Waiting for opponent" << endl;
 
-        bytes_read = recv(sock, &status, sizeof(status), 0);
-
-        if (!bytes_read)
-            sock = socket_settings(3426);
+        sock = check_server(sock);
         
         recv(sock, &winner, sizeof(winner), 0);
         recv(sock, &row, sizeof(row), 0);
@@ -117,7 +121,7 @@ void client_handler(int sock)
         if (row != -1 && col != -1)
             board[row - 1][col - 1] = (sign == 'X') ? 'O' : 'X';
 
-        system("clear");
+        //system("clear");
         
         cout << sign << " field" << endl << endl;
         
@@ -145,10 +149,7 @@ void client_handler(int sock)
         {
             cin >> row >> col;
          
-            bytes_read = recv(sock, &status, sizeof(status), 0);
-
-            if (!bytes_read)
-                sock = socket_settings(3426);
+            sock = check_server(sock);
 
             send(sock, &row, sizeof(row), 0);
             send(sock, &col, sizeof(col), 0);
