@@ -70,10 +70,10 @@ void listen_main_server_by_opt_server_1(int sock)
 
     char sign;
 
+    init_game_field();
+
     while(1)
     {
-        init_game_field();
-
         bytes_read = recv(sock, &row, sizeof(row), 0);
 
         if (!bytes_read)
@@ -84,6 +84,7 @@ void listen_main_server_by_opt_server_1(int sock)
         recv(sock, &col, sizeof(col), 0);
         recv(sock, &sign, sizeof(sign), 0);
         recv(sock, &movement, sizeof(movement), 0);
+        recv(sock, &current_player, sizeof(current_player), 0);
 
         board[row - 1][col - 1] = sign;
     }
@@ -96,10 +97,10 @@ void listen_main_server_by_opt_server_2(int sock)
 
     char sign;
 
+    init_game_field();
+
     while(1)
     {
-        init_game_field();
-
         bytes_read = recv(sock, &row, sizeof(row), 0);
 
         if (!bytes_read)
@@ -110,6 +111,7 @@ void listen_main_server_by_opt_server_2(int sock)
         recv(sock, &col, sizeof(col), 0);
         recv(sock, &sign, sizeof(sign), 0);
         recv(sock, &movement, sizeof(movement), 0);
+        recv(sock, &current_player, sizeof(current_player), 0);
 
         board[row - 1][col - 1] = sign;
     }
@@ -125,8 +127,6 @@ void check_client(int sock)
 void *opt_server_1_handler(void *clients)
 {
     char sign;
-
-    current_player = 'X';
 
     int row = -1, col = -1;
 
@@ -147,7 +147,6 @@ void *opt_server_1_handler(void *clients)
     {
         do //Coosing the sign
         {
-            check_client(curr_sock);
             recv(curr_sock, &sign, sizeof(sign), 0);
 
             if (!(signs.size() % 2))
@@ -175,7 +174,6 @@ void *opt_server_1_handler(void *clients)
             sleep(1);
         }
         bool begin_game = true;
-        check_client(curr_sock);
         send(curr_sock, &begin_game, sizeof(begin_game), 0);
 
         char not_over = -1;
@@ -185,7 +183,6 @@ void *opt_server_1_handler(void *clients)
         if (sign == current_player)
         {
             char winner = -1;
-            check_client(curr_sock);
             send(curr_sock, &winner, sizeof(winner), 0);
             send(curr_sock, &row, sizeof(row), 0);
             send(curr_sock, &col, sizeof(col), 0);
@@ -225,7 +222,6 @@ void *opt_server_1_handler(void *clients)
         char winner = game_over_validate(); //Check if game ended
 
         send(curr_sock, &winner, sizeof(winner), 0);
-        check_client(other_sock);
         send(other_sock, &winner, sizeof(winner), 0);
         send(other_sock, &row, sizeof(row), 0);
         send(other_sock, &col, sizeof(col), 0);
@@ -273,7 +269,6 @@ void *main_server_handler(void *socks)
 
     do //Coosing the sign
     {
-        check_client(curr_sock);
         recv(curr_sock, &sign, sizeof(sign), 0);
 
         if (!(signs.size() % 2))
@@ -306,7 +301,6 @@ void *main_server_handler(void *socks)
     }
     bool begin_game = true;
 
-    check_client(curr_sock);
     send(curr_sock, &begin_game, sizeof(begin_game), 0);
 
     char not_over = -1;
@@ -317,7 +311,6 @@ void *main_server_handler(void *socks)
     if (sign == current_player)
     {
         char winner = -1;
-        check_client(curr_sock);
         send(curr_sock, &winner, sizeof(char), 0);
         send(curr_sock, &row, sizeof(row), 0);
         send(curr_sock, &col, sizeof(col), 0);
@@ -352,18 +345,9 @@ void *main_server_handler(void *socks)
 
         ++movement;
 
-        for (int i : new_opt_servs)
-        {
-            send(i, &row, sizeof(row), 0);
-            send(i, &col, sizeof(col), 0);
-            send(i, &sign, sizeof(sign), 0);
-            send(i, &movement, sizeof(movement), 0);
-        }
-
         char winner = game_over_validate(); //Check if game ended
         
         send(curr_sock, &winner, sizeof(winner), 0);
-        check_client(other_sock);
         send(other_sock, &winner, sizeof(winner), 0);
         send(other_sock, &row, sizeof(row), 0);
         send(other_sock, &col, sizeof(col), 0);
@@ -377,6 +361,15 @@ void *main_server_handler(void *socks)
             current_player = 'O';
         else
             current_player = 'X';
+
+        for (int i : new_opt_servs)
+        {
+            send(i, &row, sizeof(row), 0);
+            send(i, &col, sizeof(col), 0);
+            send(i, &sign, sizeof(sign), 0);
+            send(i, &movement, sizeof(movement), 0);
+            send(i, &current_player, sizeof(current_player), 0);
+        }
     }
 
     return 0;

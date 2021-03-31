@@ -27,16 +27,16 @@ int socket_settings(uint16_t port)
     return sock;
 }
 
-int check_server(int sock)
+bool check_server(int sock)
 {
     int status;
     send(sock, &status, sizeof(status), 0);
     int bytes_read = recv(sock, &status, sizeof(status), 0);
 
     if (!bytes_read)
-        return socket_settings(3426);
+        return false;
     
-    return sock;
+    return true;
 }
 
 void client_handler(int sock)
@@ -61,11 +61,6 @@ void client_handler(int sock)
 
         sign = toupper(sign);
 
-        int new_sock = check_server(sock);
-        if (new_sock != sock)
-            new_sock = check_server(new_sock);
-        sock = new_sock;
-
         send(sock, &sign, sizeof(sign), 0);
 
         recv(sock, &is_avl_sign, sizeof(is_avl_sign), 0);
@@ -78,8 +73,6 @@ void client_handler(int sock)
     while(!is_avl_sign);
 
     cout << "Waiting for opponent" << endl;
-
-    sock = check_server(sock);
     
     bool begin_game = false;
    
@@ -90,88 +83,103 @@ void client_handler(int sock)
     while(1) //Main game
     {
         //system("clear");
-        
-        cout << sign << " field" << endl << endl;
-        
-        print_game_board();
-        
-        cout << endl;
 
-        char winner = -1;
-       
-        recv(sock, &winner, sizeof(winner), 0);
-       
-        if (winner != -1)
-        {
-            if (winner == 0)
-                cout << "Draw!" << endl;
-            else
-                cout << winner << " won!" << endl;
-            break;
-        }
-
-        cout << "Waiting for opponent" << endl;
-
-        sock = check_server(sock);
+        try {
         
-        recv(sock, &winner, sizeof(winner), 0);
-        recv(sock, &row, sizeof(row), 0);
-        recv(sock, &col, sizeof(col), 0);
-       
-        if (row != -1 && col != -1)
-            board[row - 1][col - 1] = (sign == 'X') ? 'O' : 'X';
-
-        //system("clear");
-        
-        cout << sign << " field" << endl << endl;
-        
-        print_game_board();
-        
-        cout << endl;
-
-        if (winner != -1)
-        {
-            if (winner == 0)
-                cout << "Draw!" << endl;
-            else
-                cout << winner << " won!" << endl;
-          
-            row = 0;
-            col = 0;
-           
-            send(sock, &row, sizeof(row), 0);
-            send(sock, &col, sizeof(col), 0);
-           
-            break;
-        }
-
-        do //Doing move
-        {
-            cin >> row >> col;
-         
-            sock = check_server(sock);
-
-            send(sock, &row, sizeof(row), 0);
-            send(sock, &col, sizeof(col), 0);
-          
-            if (row == 0 && col == 0)
-            {
-               cout << endl << "Please pick a value between 1 and 3" << endl;
-               continue;
-            }
-        
-            recv(sock, &is_val_1, sizeof(is_val_1), 0);
-            recv(sock, &is_val_2, sizeof(is_val_2), 0);
-
-            if (!is_val_1)
-               cout << endl << "Please pick a value between 1 and 3" << endl;
+            cout << sign << " field" << endl << endl;
             
-            if (!is_val_2)
-                cout << endl << "That move has already been done" << endl;
-        }
-        while(!is_val_1 || !is_val_2);
+            print_game_board();
+            
+            cout << endl;
 
-        board[row - 1][col - 1] = sign;
+            char winner = -1;
+            
+            if (!recv(sock, &winner, sizeof(winner), 0))
+                throw -1;
+            
+            if (winner != -1)
+            {
+                if (winner == 0)
+                    cout << "Draw!" << endl;
+                else
+                    cout << winner << " won!" << endl;
+                break;
+            }
+
+            cout << "Waiting for opponent" << endl;
+            
+            if (!recv(sock, &winner, sizeof(winner), 0))
+                throw -1;
+            if (!recv(sock, &row, sizeof(row), 0))
+                throw -1;
+            if (!recv(sock, &col, sizeof(col), 0))
+                throw -1;
+            
+            if (row != -1 && col != -1)
+                board[row - 1][col - 1] = (sign == 'X') ? 'O' : 'X';
+
+            //system("clear");
+            
+            cout << sign << " field" << endl << endl;
+            
+            print_game_board();
+            
+            cout << endl;
+
+            if (winner != -1)
+            {
+                if (winner == 0)
+                    cout << "Draw!" << endl;
+                else
+                    cout << winner << " won!" << endl;
+                
+                row = 0;
+                col = 0;
+                
+                if (!check_server(sock))
+                    throw -1;
+                send(sock, &row, sizeof(row), 0);
+                send(sock, &col, sizeof(col), 0);
+                
+                break;
+            }
+
+            do //Doing move
+            {
+                cin >> row >> col;
+
+                if (!check_server(sock))
+                    throw -1;
+                send(sock, &row, sizeof(row), 0);
+                send(sock, &col, sizeof(col), 0);
+            
+                if (row == 0 && col == 0)
+                {
+                    cout << endl << "Please pick a value between 1 and 3" << endl;
+                    continue;
+                }
+            
+                if (!recv(sock, &is_val_1, sizeof(is_val_1), 0))
+                    throw -1;
+                if (!recv(sock, &is_val_2, sizeof(is_val_2), 0))
+                    throw -1;
+
+                if (!is_val_1)
+                    cout << endl << "Please pick a value between 1 and 3" << endl;
+                
+                if (!is_val_2)
+                    cout << endl << "That move has already been done" << endl;
+            }
+            while(!is_val_1 || !is_val_2);
+
+            board[row - 1][col - 1] = sign;
+        }
+        catch (int)
+        {
+            sleep(1);
+            sock = socket_settings(3426);
+            continue;
+        }
     }
 }
 
