@@ -56,65 +56,10 @@ int opt_server_socket_settings(uint16_t port)
 
     if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
-        perror("connect");
-        exit(2);
+        return -1;
     }
 
     return sock;
-}
-
-void listen_main_server_by_opt_server_1(int sock)
-{
-    int bytes_read;
-    int row, col;
-
-    char sign;
-
-    init_game_field();
-
-    while(1)
-    {
-        bytes_read = recv(sock, &row, sizeof(row), 0);
-
-        if (!bytes_read)
-        {
-            break;
-        }
-
-        recv(sock, &col, sizeof(col), 0);
-        recv(sock, &sign, sizeof(sign), 0);
-        recv(sock, &movement, sizeof(movement), 0);
-        recv(sock, &current_player, sizeof(current_player), 0);
-
-        board[row - 1][col - 1] = sign;
-    }
-}
-
-void listen_main_server_by_opt_server_2(int sock)
-{
-    int bytes_read;
-    int row, col;
-
-    char sign;
-
-    init_game_field();
-
-    while(1)
-    {
-        bytes_read = recv(sock, &row, sizeof(row), 0);
-
-        if (!bytes_read)
-        {
-            break;
-        }
-
-        recv(sock, &col, sizeof(col), 0);
-        recv(sock, &sign, sizeof(sign), 0);
-        recv(sock, &movement, sizeof(movement), 0);
-        recv(sock, &current_player, sizeof(current_player), 0);
-
-        board[row - 1][col - 1] = sign;
-    }
 }
 
 void check_client(int sock)
@@ -125,14 +70,48 @@ void check_client(int sock)
     send(sock, &status, sizeof(status), 0);
 }
 
-void *opt_server_1_handler(void *clients)
+void listen_main_server_by_opt_server(int sock)
+{
+    int bytes_read;
+    int row, col;
+
+    char sign;
+
+    init_game_field();
+
+    while(1)
+    {
+        bytes_read = recv(sock, &row, sizeof(row), 0);
+
+        if (!bytes_read)
+        {
+            break;
+        }
+
+        recv(sock, &col, sizeof(col), 0);
+        recv(sock, &sign, sizeof(sign), 0);
+        recv(sock, &movement, sizeof(movement), 0);
+        recv(sock, &current_player, sizeof(current_player), 0);
+
+        board[row - 1][col - 1] = sign;
+    }
+}
+
+
+void *opt_server_handler(void *socks)
 {
     char sign;
 
     int row = -1, col = -1;
     int start_game = -1;
 
-    vector<int> new_clients = *(vector<int> *)clients;
+    sockets new_socks = *(sockets *)socks;
+
+    vector<int> new_clients = *new_socks.clients;
+    vector<int> new_opt_servs;
+
+    if (new_socks.opt_servs != nullptr)
+        new_opt_servs = *new_socks.opt_servs;
 
     int curr_sock = new_clients[new_clients.size() - 1];
 
@@ -141,9 +120,9 @@ void *opt_server_1_handler(void *clients)
     bool is_avl_sign = false;
 
     if (new_clients.size() % 2)
-        other_sock = curr_sock + 2;
+        other_sock = curr_sock + 1;
     else if(!(new_clients.size() % 2))
-        other_sock = curr_sock - 2;
+        other_sock = curr_sock - 1;
 
     recv(curr_sock, &start_game, sizeof(start_game), 0);
 
@@ -212,9 +191,9 @@ void *opt_server_1_handler(void *clients)
 
             check_client(curr_sock);
 
-            recv(curr_sock, &row, sizeof(row), 0);
+            recv(curr_sock, &row, sizeof(row), 0);     
             recv(curr_sock, &col, sizeof(col), 0);
-
+        
             if (row == 0 && col == 0)
                 return 0;
             
@@ -239,15 +218,19 @@ void *opt_server_1_handler(void *clients)
 
        current_player = current_player == 'X' ? 'O' : 'X';
 
+        if(new_socks.opt_servs != nullptr)
+        {
+            send(new_opt_servs[0], &row, sizeof(row), 0);
+            send(new_opt_servs[0], &col, sizeof(col), 0);
+            send(new_opt_servs[0], &sign, sizeof(sign), 0);
+            send(new_opt_servs[0], &movement, sizeof(movement), 0);
+            send(new_opt_servs[0], &current_player, sizeof(current_player), 0);
+        }
+
         if (winner != -1)
             break;
     }
 
-    return 0;
-}
-
-void *opt_server_2_handler(void *clients)
-{
     return 0;
 }
 
@@ -257,7 +240,7 @@ void *main_server_handler(void *socks)
 
     current_player = 'X';
 
-    sockets new_socks = *(sockets *) socks;
+    sockets new_socks = *(sockets *)socks;
 
     vector<int> new_clients = *new_socks.clients;
     vector<int> new_opt_servs = *new_socks.opt_servs;
@@ -333,7 +316,7 @@ void *main_server_handler(void *socks)
             }
       
             check_client(curr_sock);
-            
+             
             recv(curr_sock, &row, sizeof(row), 0);
             recv(curr_sock, &col, sizeof(col), 0);
 
@@ -361,9 +344,6 @@ void *main_server_handler(void *socks)
 
         current_player = current_player == 'X' ? 'O' : 'X';
 
-        if (winner != -1)
-            break;
-
         for (int i : new_opt_servs)
         {
             send(i, &row, sizeof(row), 0);
@@ -372,6 +352,9 @@ void *main_server_handler(void *socks)
             send(i, &movement, sizeof(movement), 0);
             send(i, &current_player, sizeof(current_player), 0);
         }
+
+        if (winner != -1)
+            break;
     }
 
     return 0;

@@ -61,12 +61,25 @@ int main(int argc, char const **argv)
             {
                 sock = opt_server_socket_settings(3425);
                 
-                listen_main_server_by_opt_server_1(sock);
+                listen_main_server_by_opt_server(sock);
 
                 listener = main_server_socket_settings(3426);
 
                 while(1)
                 {
+                    while(opt_servs.size() != 1)
+                    {
+                        sock = accept(listener, NULL, NULL);
+                       
+                        if(sock < 0)
+                        {
+                            perror("accept");
+                            exit(1);
+                        }
+
+                        opt_servs.push_back(sock);
+                    }
+
                     sock = accept(listener, NULL, NULL);
                    
                     if(sock < 0)
@@ -75,9 +88,13 @@ int main(int argc, char const **argv)
                         exit(1);
                     }
        
+
                     clients.push_back(sock);
-                    //cout << clients[0] << " " << clients[1] << endl;
-                    if(pthread_create(&pid, NULL, opt_server_1_handler, (void *)&clients) < 0)
+
+                    socks.clients = &clients;
+                    socks.opt_servs = &opt_servs;
+            
+                    if(pthread_create(&pid, NULL, opt_server_handler, (void *)&socks) < 0)
                     {
                         perror("could not create thread");
 
@@ -90,8 +107,12 @@ int main(int argc, char const **argv)
             else if (param == "--opt_serv_2")
             {
                 sock = opt_server_socket_settings(3425);
+                listen_main_server_by_opt_server(sock);
+
+                sock = opt_server_socket_settings(3426);
                 
-                listen_main_server_by_opt_server_2(sock);
+                if (sock != -1)
+                    listen_main_server_by_opt_server(sock);
 
                 listener = main_server_socket_settings(3427);
 
@@ -106,8 +127,11 @@ int main(int argc, char const **argv)
                     }
 
                     clients.push_back(sock);
+                      
+                    socks.clients = &clients;
+                    socks.opt_servs = nullptr;
 
-                    if(pthread_create(&pid, NULL, opt_server_2_handler, (void *)&clients) < 0)
+                    if(pthread_create(&pid, NULL, opt_server_handler, (void *)&socks) < 0)
                     {
                         perror("could not create thread");
 

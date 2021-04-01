@@ -2,7 +2,7 @@
 
 int main(int argc, char const **argv)
 {
-	int sock = socket_settings(3425);
+	int sock = socket_settings(MAIN_PORT);
 
     client_handler(sock);
 	
