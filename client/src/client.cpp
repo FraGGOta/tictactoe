@@ -2,6 +2,8 @@
 
 char board[3][3];
 
+int row = -1, col = -1;
+
 int socket_settings(uint16_t port)
 {
     struct sockaddr_in addr;
@@ -136,7 +138,7 @@ int reconnect_from_waiting_choosing_sign_stage(int i, int *sock, char *sign)
     }
 }
 
-/*int reconnect_from_waiting_making_movement_stage(int i, int *sock, char *sign, int *row, int *col)
+/*int reconnect_from_waiting_making_movement_stage(int i, int *sock, char *sign)
 {
     char winner = -1;
 
@@ -152,13 +154,13 @@ int reconnect_from_waiting_choosing_sign_stage(int i, int *sock, char *sign)
 
         if(!recv(*sock, &winner, sizeof(winner), 0))
             throw -1;
-        if(!recv(*sock, row, sizeof(*row), 0))
+        if(!recv(*sock, &row, sizeof(row), 0))
             throw -1;
-        if(!recv(*sock, col, sizeof(*col), 0))
+        if(!recv(*sock, &col, sizeof(col), 0))
             throw -1;
-        
-        if(*row != -1 && *col != -1)
-            board[*row - 1][*col - 1] = (*sign == 'X') ? 'O' : 'X';
+    
+        if(row != -1 && col != -1)
+            board[row - 1][col - 1] = (*sign == 'X') ? 'O' : 'X';
 
         //system("clear");
         
@@ -175,14 +177,14 @@ int reconnect_from_waiting_choosing_sign_stage(int i, int *sock, char *sign)
             else
                 cout << winner << " won!" << endl;
             
-            *row = 0;
-           * col = 0;
+            row = 0;
+            col = 0;
             
             if(!check_server(*sock))
                 throw -1;
 
-            send(*sock, row1, sizeof(*row), 0);
-            send(*sock, col1, sizeof(*col), 0);
+            send(*sock, &row, sizeof(row), 0);
+            send(*sock, &col, sizeof(col), 0);
             
             return 1;
         }
@@ -205,7 +207,7 @@ int reconnect_from_waiting_choosing_sign_stage(int i, int *sock, char *sign)
     }
 }
 
-int reconnect_from_making_movement_stage(int i, int *sock, char *sign, int *row, int *col)
+int reconnect_from_making_movement_stage(int i, int *sock, char *sign)
 {
     int s = 0;
 
@@ -227,21 +229,21 @@ int reconnect_from_making_movement_stage(int i, int *sock, char *sign, int *row,
             if(i)
             {
                 if(s)
-                    cin >> *row >> *col;
+                    cin >> row >> col;
                 ++s;
             }
             else
-                cin >> *row >> *col;
+                cin >> row >> col;
           
             if(!check_server(*sock))
                 throw -1;
           
-            send(*sock, row1, sizeof(*row), 0);
-            send(*sock, col1, sizeof(*col), 0);
+            send(*sock, &row, sizeof(row), 0);
+            send(*sock, &col, sizeof(col), 0);
         
-            if(*row == 0 && *col == 0)
+            if(row == 0 && col == 0)
             {
-                cout << endl << "1Please pick a value between 1 and 3" << endl;
+                cout << endl << "Please pick a value between 1 and 3" << endl;
                     continue;
             }
         
@@ -251,14 +253,14 @@ int reconnect_from_making_movement_stage(int i, int *sock, char *sign, int *row,
                 throw -1;
 
             if(!is_val_1)
-                cout << endl << "2Please pick a value between 1 and 3" << endl;
+                cout << endl << "Please pick a value between 1 and 3" << endl;
             
             if(!is_val_2)
                 cout << endl << "That move has already been done" << endl;
         }
         while(!is_val_1 || !is_val_2);
 
-        board[*row - 1][*col - 1] = *sign;
+        board[row - 1][col - 1] = *sign;
 
         return 0;
     }
@@ -282,7 +284,6 @@ void client_handler(int sock)
 {
     char sign;
 
-    int row = -1, col = -1;
     int start_game = -1;
 
     bool is_val_1 = false;
@@ -337,7 +338,7 @@ void client_handler(int sock)
         
         for (int i = 0; ; ++i)
         {
-           /* int status = reconnect_from_waiting_making_movement_stage(i, &sock, &sign, &row, &col);
+           /* int status = reconnect_from_waiting_making_movement_stage(i, &sock, &sign);
                
             if(!status)
                 break;
@@ -411,7 +412,7 @@ void client_handler(int sock)
         
         for (int i = 0, s = 0; ; ++i, s = 0)
         {
-         /*   if(!reconnect_from_making_movement_stage(i, &sock, &sign, &row, &col))
+         /*   if(!reconnect_from_making_movement_stage(i, &sock, &sign))
                 break;*/
 
             try

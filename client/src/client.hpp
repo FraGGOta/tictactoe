@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <cstring>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -13,8 +14,8 @@ using namespace std;
 int socket_settings(uint16_t port);
 int reconnect_from_choosing_sign_stage(int i, int *sock, char *sign);
 int reconnect_from_waiting_choosing_sign_stage(int i, int *sock, char *sign);
-int reconnect_from_waiting_making_movement_stage(int i, int *sock, char *sign, int *row, int *col);
-int reconnect_from_making_movement_stage(int i, int *sock, char *sign, int *row, int *col);
+int reconnect_from_waiting_making_movement_stage(int i, int *sock, char *sign);
+int reconnect_from_making_movement_stage(int i, int *sock, char *sign);
 void client_handler(int sock);
 void init_game_field(void);
 void fill_game_field(int i);
