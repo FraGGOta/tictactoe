@@ -99,8 +99,6 @@ void chose_sign(int *sock, char *sign)
                 if(*sock != -1)
                     break;
             }
-
-            continue;
         }
     }
 }
@@ -150,8 +148,6 @@ void wait_opponent_sign(int *sock, char sign)
                     break;
                 }
             }
-
-            continue;
         }
     }
 }
@@ -230,8 +226,6 @@ int wait_opponent_move(int *sock, char sign)
                 if(*sock != -1)
                     break;
             }
-
-            continue; 
  
         }
     }
@@ -315,8 +309,6 @@ void make_move(int *sock, char sign)
                 if(*sock != -1)
                     break;
             }
-
-            continue;
         }
     }
 }
