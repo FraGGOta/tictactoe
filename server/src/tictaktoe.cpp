@@ -137,7 +137,7 @@ void *opt_server_handler(void *socks)
         do 
         {
             recv(curr_sock, &sign, sizeof(sign), 0);
-
+       
             if (!(signs.size() % 2))
             {
                 is_avl_sign = true;

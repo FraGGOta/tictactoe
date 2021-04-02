@@ -12,12 +12,12 @@ using namespace std;
 #define MAIN_PORT 3425
 
 int socket_settings(uint16_t port);
-int reconnect_from_choosing_sign_stage(int i, int *sock, char *sign);
-int reconnect_from_waiting_choosing_sign_stage(int i, int *sock, char *sign);
-int reconnect_from_waiting_making_movement_stage(int i, int *sock, char *sign);
-int reconnect_from_making_movement_stage(int i, int *sock, char *sign);
+bool check_server(int sock);
+int wait_opponent_move(int *sock, char sign);
+void chose_sign(int *sock, char *sign);
+void wait_opponent_sign(int *sock, char sign);
+void make_move(int *sock, char sign);
 void client_handler(int sock);
 void init_game_field(void);
 void fill_game_field(int i);
 void print_game_board(void);
-bool check_server(int sock);

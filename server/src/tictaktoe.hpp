@@ -11,6 +11,8 @@
 
 using namespace std;
 
+#define MAIN_PORT 3425
+
 typedef struct sockets
 {
 	vector<int> *clients;
