@@ -19,5 +19,5 @@ void wait_opponent_sign(int *sock, char sign);
 void make_move(int *sock, char sign);
 void client_handler(int sock);
 void init_game_field(void);
-void fill_game_field(int i);
+void print_sign_part(int i, int j, int row);
 void print_game_board(void);

@@ -61,10 +61,10 @@ void chose_sign(int *sock, char *sign)
                 {
                     if(j)
                         cin >> *sign;
-                     ++j;
+                    ++j;
                 }
                 else
-                     cin >> *sign;
+                    cin >> *sign;
 
                 *sign = toupper(*sign);
 
@@ -75,7 +75,7 @@ void chose_sign(int *sock, char *sign)
 
                 if(!is_avl_sign)
                 {
-                    cout << endl << *sign << " has already been choosen" << endl << endl;
+                    cout << endl << " ~ " << *sign << " has already been choosen" << " ~ " << endl << endl;
                 }
             }
             while(!is_avl_sign);
@@ -180,20 +180,17 @@ int wait_opponent_move(int *sock, char sign)
             if(row != -1 && col != -1)
                 board[row - 1][col - 1] = (sign == 'X') ? 'O' : 'X';
 
-            //system("clear");
+            system("clear");
             
-            cout << sign << " field" << endl << endl;
-            
+            cout << "        ~ " << "You are " << sign << " player" << " ~ " << endl << endl;
             print_game_board();
-            
-            cout << endl;
 
             if(winner != -1)
             {
                 if(winner == 0)
-                    cout << "Draw!" << endl;
+                    cout << " ~ " << "Draw!" << " ~ " << endl;
                 else
-                    cout << winner << " won!" << endl;
+                    cout << " ~ " << winner << " won!" << " ~ " << endl;
                 
                 row = 0;
                 col = 0;
@@ -257,11 +254,19 @@ void make_move(int *sock, char sign)
                 if(i)
                 {
                     if(j)
+                    {
+                        cout << "> " << flush;
                         cin >> row >> col;
+                    }
                     ++j;
                 }
                 else
-                    cin >> row >> col;
+                {
+                    cout << "> " << flush;
+                    cin >> row;
+                    cout << "> " << flush;
+                    cin >> col;
+                }
            
                 if(!check_server(*sock))
                     throw -1;
@@ -271,7 +276,7 @@ void make_move(int *sock, char sign)
             
                 if(row == 0 && col == 0)
                 {
-                    cout << endl << "Please pick a value between 1 and 3" << endl;
+                    cout << endl << " ~ " << "Please pick a value between 1 and 3" << " ~ " << endl;
                     continue;
                 }
             
@@ -281,10 +286,10 @@ void make_move(int *sock, char sign)
                     throw -1;
 
                 if(!is_val_1)
-                    cout << endl << "Please pick a value between 1 and 3" << endl;
+                    cout << endl << " ~ " << "Please pick a value between 1 and 3" << " ~ " << endl;
                 
                 if(!is_val_2)
-                    cout << endl << "That move has already been done" << endl;
+                    cout << endl << " ~ " << "That move has already been done" << " ~ " << endl;
             }
             while(!is_val_1 || !is_val_2);
 
@@ -319,27 +324,25 @@ void client_handler(int sock)
 
     init_game_field();
 
-    //system("clear");
+    system("clear");
    
-    cout << "Choose X/O" << endl << endl;
+    cout << " ~ " << "Choose your sign X or O" << " ~ " << endl << endl << "> " << flush;
 
     chose_sign(&sock, &sign);
 
-    cout << "Waiting for opponent" << endl;
+    cout << " ~ " << "Waiting for opponent..." << " ~ " << endl;
    
     wait_opponent_sign(&sock, sign);
 
-    //system("clear");
+    system("clear");
 
     while(1) 
     {
-        //system("clear");
+        system("clear");
         
-        cout << sign << " field" << endl << endl;
+        cout << "        ~ " << "You are " << sign << " player" << " ~ " << endl << endl;
         
         print_game_board();
-        
-        cout << endl;
 
         char winner = -1;
         
@@ -348,13 +351,13 @@ void client_handler(int sock)
         if(winner != -1)
         {
             if(winner == 0)
-                cout << "Draw!" << endl;
+                cout << " ~ " << "Draw!" << " ~ " << endl;
             else
-                cout << winner << " won!" << endl;
+                cout << " ~ " << winner << " won!" << " ~ " << endl;
             break;
         }
 
-        cout << "Waiting for opponent" << endl;
+        cout << " ~ " << "Waiting for opponent..." << " ~ " << endl;
 
         if(wait_opponent_move(&sock, sign) == 1)
             break;
@@ -374,30 +377,156 @@ void init_game_field()
     }
 }
 
-void fill_game_field(int i)
+void print_sign_part(int i, int j, int row)
 {
-    for(int j = 0 ; j < 3 ; ++j)
+    switch (board[i][j])
     {
-        cout << board[i][j] << "\t";
+    case 'X':
+        switch (row)
+        {
+        case 0:
+            cout << " \\  / ";
+            break;
+        case 1:
+            cout << "  \\/  ";
+            break;
+        case 2:
+            cout << "  /\\  ";
+            break;
+        case 3:
+            cout << " /  \\ ";
+            break;
+        default:
+            break;
+        }
+        break;
+    case 'O':
+        switch (row)
+        {
+        case 0:
+            cout << "  --  ";
+            break;
+        case 1:
+            cout << " |  | ";
+            break;
+        case 2:
+            cout << " |  | ";
+            break;
+        case 3:
+            cout << "  --  ";
+            break;
+        default:
+            break;
+        }
+        break;
+    default:
+        cout << "      ";
+        break;
     }
-    cout << endl;
 }
 
 void print_game_board(void)
 {
-    cout << "\t";
 
-    for(int i = 0 ; i < 3 ; ++i)
-    {
-        cout << i + 1 << "\t";
-    }
-
+    cout << "        ";
+    print_sign_part(0, 0, 0);
+    cout << "{";
+    print_sign_part(0, 1, 0);
+    cout << "}";
+    print_sign_part(0, 2, 0);
     cout << endl;
 
-    for(int i = 0 ; i < 3 ; ++i)
-    {
-        cout << i + 1 << "\t";
+    cout << "        ";
+    print_sign_part(0, 0, 1);
+    cout << "}";
+    print_sign_part(0, 1, 1);
+    cout << "{";
+    print_sign_part(0, 2, 1);
+    cout << endl;
 
-        fill_game_field(i);
-    }
+    cout << "        ";
+    print_sign_part(0, 0, 2);
+    cout << "{";
+    print_sign_part(0, 1, 2);
+    cout << "}";
+    print_sign_part(0, 2, 2);
+    cout << endl;
+
+    cout << "        ";
+    print_sign_part(0, 0, 3);
+    cout << "}";
+    print_sign_part(0, 1, 3);
+    cout << "{";
+    print_sign_part(0, 2, 3);
+    cout << endl;
+
+
+    cout << "        ~-~~-~+~-~~-~+~-~~-~" << endl;
+
+    cout << "        ";
+    print_sign_part(1, 0, 0);
+    cout << "{";
+    print_sign_part(1, 1, 0);
+    cout << "}";
+    print_sign_part(1, 2, 0);
+    cout << endl;
+
+    cout << "        ";
+    print_sign_part(1, 0, 1);
+    cout << "}";
+    print_sign_part(1, 1, 1);
+    cout << "{";
+    print_sign_part(1, 2, 1);
+    cout << endl;
+
+    cout << "        ";
+    print_sign_part(1, 0, 2);
+    cout << "{";
+    print_sign_part(1, 1, 2);
+    cout << "}";
+    print_sign_part(1, 2, 2);
+    cout << endl;
+
+    cout << "        ";
+    print_sign_part(1, 0, 3);
+    cout << "}";
+    print_sign_part(1, 1, 3);
+    cout << "{";
+    print_sign_part(1, 2, 3);
+    cout << endl;
+
+    cout << "        ~-~~-~+~-~~-~+~-~~-~" << endl;
+
+    cout << "        ";
+    print_sign_part(2, 0, 0);
+    cout << "{";
+    print_sign_part(2, 1, 0);
+    cout << "}";
+    print_sign_part(2, 2, 0);
+    cout << endl;
+
+    cout << "        ";
+    print_sign_part(2, 0, 1);
+    cout << "}";
+    print_sign_part(2, 1, 1);
+    cout << "{";
+    print_sign_part(2, 2, 1);
+    cout << endl;
+
+    cout << "        ";
+    print_sign_part(2, 0, 2);
+    cout << "{";
+    print_sign_part(2, 1, 2);
+    cout << "}";
+    print_sign_part(2, 2, 2);
+    cout << endl;
+
+    cout << "        ";
+    print_sign_part(2, 0, 3);
+    cout << "}";
+    print_sign_part(2, 1, 3);
+    cout << "{";
+    print_sign_part(2, 2, 3);
+    cout << endl << endl;
+
 }
