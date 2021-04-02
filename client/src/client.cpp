@@ -44,7 +44,7 @@ void chose_sign(int *sock, char *sign)
 {
     bool is_avl_sign = false;
 
-    for (int i = 0, s = 0; ; ++i, s = 0)
+    for (int i = 0, j = 0; ; ++i, j = 0)
     {
         try
         {
@@ -59,9 +59,9 @@ void chose_sign(int *sock, char *sign)
             {
                 if(i)
                 {
-                    if(s)
+                    if(j)
                         cin >> *sign;
-                     ++s;
+                     ++j;
                 }
                 else
                      cin >> *sign;
@@ -240,7 +240,7 @@ void make_move(int *sock, char sign)
     bool is_val_1 = false;
     bool is_val_2 = false;
    
-    for (int i = 0, s = 0; ; ++i, s = 0)
+    for (int i = 0, j = 0; ; ++i, j = 0)
     {
         try
         {
@@ -256,9 +256,9 @@ void make_move(int *sock, char sign)
             {
                 if(i)
                 {
-                    if(s)
+                    if(j)
                         cin >> row >> col;
-                    ++s;
+                    ++j;
                 }
                 else
                     cin >> row >> col;
