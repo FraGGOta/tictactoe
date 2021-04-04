@@ -2,7 +2,7 @@
 
 int main(int argc, char const **argv)
 {	
-    int listener, sock;
+    int listener, sock, sock_1;
 
     vector<int> clients;
     vector<int> opt_servs;
@@ -14,23 +14,23 @@ int main(int argc, char const **argv)
     switch(argc)
     {
         case 1:
-            listener = main_server_socket_settings(SERV_ID, MAIN_PORT);
+            listener = server_socket_settings(SERV_ID, MAIN_PORT);
+
+            while(opt_servs.size() != 2)
+            {
+                sock = accept(listener, NULL, NULL);
+               
+                if(sock < 0)
+                {
+                    perror("accept");
+                    exit(1);
+                }
+
+                opt_servs.push_back(sock);
+            }
 
         	while(1)
             {
-                while(opt_servs.size() != 2)
-                {
-                    sock = accept(listener, NULL, NULL);
-                   
-                    if(sock < 0)
-                    {
-                        perror("accept");
-                        exit(1);
-                    }
-
-                    opt_servs.push_back(sock);
-                }
-
                 sock = accept(listener, NULL, NULL);
                
                 if(sock < 0)
@@ -59,27 +59,28 @@ int main(int argc, char const **argv)
 
             if (param == "--opt_serv_1")
             {
-                sock = opt_server_socket_settings(SERV_ID, MAIN_PORT);
+                listener = server_socket_settings(SERV_ID, MAIN_PORT + 1);
                 
-                listen_main_server_by_opt_server(sock);
+                sock = client_socket_settings(SERV_ID, MAIN_PORT);
 
-                listener = main_server_socket_settings(SERV_ID, MAIN_PORT + 1);
+                while(opt_servs.size() != 1)
+                {
+                   sock_1 = accept(listener, NULL, NULL);
+                   
+                    if(sock_1 < 0)
+                    {
+                        perror("accept");
+                        exit(1);
+                    }
+
+                    opt_servs.push_back(sock_1);
+                }
+
+                if(sock != -1)
+                    listen_current_server(sock);
 
                 while(1)
                 {
-                    while(opt_servs.size() != 1)
-                    {
-                        sock = accept(listener, NULL, NULL);
-                       
-                        if(sock < 0)
-                        {
-                            perror("accept");
-                            exit(1);
-                        }
-
-                        opt_servs.push_back(sock);
-                    }
-
                     sock = accept(listener, NULL, NULL);
                    
                     if(sock < 0)
@@ -105,15 +106,16 @@ int main(int argc, char const **argv)
             }
             else if (param == "--opt_serv_2")
             {
-                sock = opt_server_socket_settings(SERV_ID, MAIN_PORT);
-                listen_main_server_by_opt_server(sock);
-
-                sock = opt_server_socket_settings(SERV_ID, MAIN_PORT + 1);
+                listener = server_socket_settings(SERV_ID, MAIN_PORT + 2);
+                
+                sock = client_socket_settings(SERV_ID, MAIN_PORT);
+                sock_1 = client_socket_settings(SERV_ID, MAIN_PORT + 1);
                 
                 if (sock != -1)
-                    listen_main_server_by_opt_server(sock);
-
-                listener = main_server_socket_settings(SERV_ID, MAIN_PORT + 2);
+                    listen_current_server(sock);          
+                
+                if (sock_1 != -1)
+                    listen_current_server(sock_1);
 
                 while(1)
                 {

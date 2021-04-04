@@ -48,7 +48,7 @@ void chose_sign(int *sock, char *sign)
 {
     bool is_avl_sign = true;
 
-    for (int i = 0, j = 0; ; ++i, j = 0)
+    for(int i = 0, j = 0; ; ++i, j = 0)
     {
         system("clear");
         cout << " ~ " << "Choose your sign X or O" << " ~ " << endl << endl;
@@ -98,7 +98,7 @@ void chose_sign(int *sock, char *sign)
                 if(!recv(*sock, &is_avl_sign, sizeof(is_avl_sign), 0))
                     throw -1;
 
-                if (*sign != 'X' and *sign != 'O')
+                if (*sign != 'X' && *sign != 'O')
                     msg = "Invalid input! Try again";
                 else
                     msg = "This sign has already been choosen";
@@ -111,7 +111,7 @@ void chose_sign(int *sock, char *sign)
         { 
             for (int i = MAIN_PORT; i <= LAST_PORT; ++i)
             {
-                sleep(2);
+                //sleep(2);
                 
                 *sock = socket_settings(SERV_ID, i);
                 
@@ -157,7 +157,7 @@ void wait_opponent_sign(int *sock, char sign)
         { 
             for (int i = MAIN_PORT; i <= LAST_PORT; ++i)
             {
-                sleep(2);
+                //sleep(2);
                 
                 *sock = socket_settings(SERV_ID, i);
                 
@@ -231,7 +231,7 @@ int wait_opponent_move(int *sock, char sign)
         { 
             for (int i = MAIN_PORT; i <= LAST_PORT; ++i)
             {
-                sleep(2);
+                //sleep(2);
                 
                 *sock = socket_settings(SERV_ID, i);
                 
@@ -280,8 +280,13 @@ void make_move(int *sock, char sign)
                 {
                     if(j)
                     {
+                        string buf;
                         cout << "> " << flush;
-                        cin >> row >> col;
+                        getline(cin, buf);
+                        row = buf[0] - '0';
+                        cout << endl << "> " << flush;
+                        getline(cin, buf);
+                        col = buf[0] - '0';
                     }
                     ++j;
                 }
@@ -329,7 +334,7 @@ void make_move(int *sock, char sign)
         { 
             for (int i = MAIN_PORT; i <= LAST_PORT; ++i)
             {
-                sleep(2);
+                //sleep(2);
                 
                 *sock = socket_settings(SERV_ID, i);
                 

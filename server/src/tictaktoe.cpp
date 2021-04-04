@@ -7,8 +7,9 @@ char current_player;
 int movement;
 
 vector<char> signs;
+set<int> dead_socks;
 
-int main_server_socket_settings(char const *id, uint16_t port)
+int server_socket_settings(char const *id, uint16_t port)
 {
     int listener;
 
@@ -42,7 +43,7 @@ int main_server_socket_settings(char const *id, uint16_t port)
     return listener;
 }
 
-int opt_server_socket_settings(char const *id, uint16_t port)
+int client_socket_settings(char const *id, uint16_t port)
 {
     struct sockaddr_in addr;
     struct hostent *hp;
@@ -78,7 +79,25 @@ void check_client(int sock)
     send(sock, &status, sizeof(status), 0);
 }
 
-void listen_main_server_by_opt_server(int sock)
+bool check_listening_server(int sock)
+{
+    int status;
+
+    send(sock, &status, sizeof(status), 0);
+
+    int bytes_read = recv(sock, &status, sizeof(status), 0);
+
+    if(!bytes_read)
+    {
+        dead_socks.emplace(sock);
+
+        return false;
+    }
+    
+    return true;
+}
+
+void listen_current_server(int sock)
 {
     int bytes_read;
     int row, col;
@@ -89,6 +108,8 @@ void listen_main_server_by_opt_server(int sock)
 
     while(1)
     {
+        check_client(sock);
+
         bytes_read = recv(sock, &row, sizeof(row), 0);
 
         if (!bytes_read)
@@ -145,7 +166,7 @@ void *opt_server_handler(void *socks)
         do 
         {
             recv(curr_sock, &sign, sizeof(sign), 0);
-            if (sign != 'X' and sign != 'O')
+            if (sign != 'X' && sign != 'O')
             {
                 is_avl_sign = false;
                 send(curr_sock, &is_avl_sign, sizeof(is_avl_sign), 0);
@@ -231,12 +252,21 @@ void *opt_server_handler(void *socks)
        current_player = current_player == 'X' ? 'O' : 'X';
 
         if(new_socks.opt_servs != nullptr)
-        {
-            send(new_opt_servs[0], &row, sizeof(row), 0);
-            send(new_opt_servs[0], &col, sizeof(col), 0);
-            send(new_opt_servs[0], &sign, sizeof(sign), 0);
-            send(new_opt_servs[0], &movement, sizeof(movement), 0);
-            send(new_opt_servs[0], &current_player, sizeof(current_player), 0);
+        {    
+            for (int i : new_opt_servs)
+            {
+                if(dead_socks.find(i) != dead_socks.end())
+                {
+                    if(check_listening_server(i))
+                    {
+                        send(i, &row, sizeof(row), 0);
+                        send(i, &col, sizeof(col), 0);
+                        send(i, &sign, sizeof(sign), 0);
+                        send(i, &movement, sizeof(movement), 0);
+                        send(i, &current_player, sizeof(current_player), 0);
+                    }
+                }
+            }
         }
 
         if (winner != -1)
@@ -316,7 +346,7 @@ void *main_server_handler(void *socks)
     if (sign == current_player)
     {
         char winner = -1;
-        send(curr_sock, &winner, sizeof(char), 0);
+        send(curr_sock, &winner, sizeof(winner), 0);
         send(curr_sock, &row, sizeof(row), 0);
         send(curr_sock, &col, sizeof(col), 0);
     }
@@ -353,7 +383,7 @@ void *main_server_handler(void *socks)
         ++movement;
 
         char winner = game_over_validate();
-        
+     
         send(curr_sock, &winner, sizeof(winner), 0);
         send(other_sock, &winner, sizeof(winner), 0);
         send(other_sock, &row, sizeof(row), 0);
@@ -363,11 +393,17 @@ void *main_server_handler(void *socks)
 
         for (int i : new_opt_servs)
         {
-            send(i, &row, sizeof(row), 0);
-            send(i, &col, sizeof(col), 0);
-            send(i, &sign, sizeof(sign), 0);
-            send(i, &movement, sizeof(movement), 0);
-            send(i, &current_player, sizeof(current_player), 0);
+            if(dead_socks.find(i) != dead_socks.end())
+            {
+                if(check_listening_server(i))
+                {
+                    send(i, &row, sizeof(row), 0);
+                    send(i, &col, sizeof(col), 0);
+                    send(i, &sign, sizeof(sign), 0);
+                    send(i, &movement, sizeof(movement), 0);
+                    send(i, &current_player, sizeof(current_player), 0);
+                }
+            }
         }
 
         if (winner != -1)
