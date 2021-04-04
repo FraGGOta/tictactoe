@@ -110,9 +110,7 @@ void chose_sign(int *sock, char *sign)
         catch(int)
         { 
             for (int i = MAIN_PORT; i <= LAST_PORT; ++i)
-            {
-                //sleep(2);
-                
+            {    
                 *sock = socket_settings(SERV_ID, i);
                 
                 if(*sock != -1)
@@ -156,9 +154,7 @@ void wait_opponent_sign(int *sock, char sign)
         catch(int)
         { 
             for (int i = MAIN_PORT; i <= LAST_PORT; ++i)
-            {
-                //sleep(2);
-                
+            {             
                 *sock = socket_settings(SERV_ID, i);
                 
                 if(*sock != -1)
@@ -230,9 +226,7 @@ int wait_opponent_move(int *sock, char sign)
         catch(int)
         { 
             for (int i = MAIN_PORT; i <= LAST_PORT; ++i)
-            {
-                //sleep(2);
-                
+            {               
                 *sock = socket_settings(SERV_ID, i);
                 
                 if(*sock != -1)
@@ -333,9 +327,7 @@ void make_move(int *sock, char sign)
         catch(int)
         { 
             for (int i = MAIN_PORT; i <= LAST_PORT; ++i)
-            {
-                //sleep(2);
-                
+            {            
                 *sock = socket_settings(SERV_ID, i);
                 
                 if(*sock != -1)
