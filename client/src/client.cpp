@@ -46,10 +46,13 @@ bool check_server(int sock)
 
 void chose_sign(int *sock, char *sign)
 {
-    bool is_avl_sign = false;
+    bool is_avl_sign = true;
 
     for (int i = 0, j = 0; ; ++i, j = 0)
     {
+        system("clear");
+        cout << " ~ " << "Choose your sign X or O" << " ~ " << endl << endl;
+
         try
         {
             if(i)
@@ -59,16 +62,34 @@ void chose_sign(int *sock, char *sign)
                 send(*sock, &start_game, sizeof(start_game), 0);
             }
 
+            string msg = "";
             do
             {
+                if(!is_avl_sign)
+                {
+                    system("clear");
+                    cout << " ~ " << "Choose your sign X or O" << " ~ " << endl << endl;
+                    cout << " ~ " << msg << " ~ " << endl;
+                }
+
                 if(i)
                 {
                     if(j)
-                        cin >> *sign;
+                    {
+                        string buf;
+                        cout << "> " << flush;
+                        getline(cin, buf);
+                        *sign = buf[0];
+                    }
                     ++j;
                 }
                 else
-                    cin >> *sign;
+                {
+                    string buf;
+                    cout << "> " << flush;
+                    getline(cin, buf);
+                    *sign = buf[0];
+                }
 
                 *sign = toupper(*sign);
 
@@ -77,10 +98,10 @@ void chose_sign(int *sock, char *sign)
                 if(!recv(*sock, &is_avl_sign, sizeof(is_avl_sign), 0))
                     throw -1;
 
-                if(!is_avl_sign)
-                {
-                    cout << endl << " ~ " << *sign << " has already been choosen" << " ~ " << endl << endl;
-                }
+                if (*sign != 'X' and *sign != 'O')
+                    msg = "Invalid input! Try again";
+                else
+                    msg = "This sign has already been choosen";
             }
             while(!is_avl_sign);
 
@@ -247,8 +268,14 @@ void make_move(int *sock, char sign)
                 send(*sock, &sign, sizeof(sign), 0);
             }
 
+            string msg = "Enter row and column number";
             do 
             {
+                system("clear");
+                cout << "        ~ " << "You are " << sign << " player" << " ~ " << endl << endl;
+                print_game_board();
+                cout << endl << " ~ " << msg << " ~ " << endl;
+
                 if(i)
                 {
                     if(j)
@@ -260,10 +287,13 @@ void make_move(int *sock, char sign)
                 }
                 else
                 {
+                    string buf;
                     cout << "> " << flush;
-                    cin >> row;
-                    cout << "> " << flush;
-                    cin >> col;
+                    getline(cin, buf);
+                    row = buf[0] - '0';
+                    cout << endl << "> " << flush;
+                    getline(cin, buf);
+                    col = buf[0] - '0';
                 }
            
                 if(!check_server(*sock))
@@ -274,7 +304,7 @@ void make_move(int *sock, char sign)
             
                 if(row == 0 && col == 0)
                 {
-                    cout << endl << " ~ " << "Please pick a value between 1 and 3" << " ~ " << endl;
+                    msg = "Please pick a value between 1 and 3";
                     continue;
                 }
             
@@ -284,10 +314,10 @@ void make_move(int *sock, char sign)
                     throw -1;
 
                 if(!is_val_1)
-                    cout << endl << " ~ " << "Please pick a value between 1 and 3" << " ~ " << endl;
+                    msg = "Please pick a value between 1 and 3";
                 
                 if(!is_val_2)
-                    cout << endl << " ~ " << "That move has already been done" << " ~ " << endl;
+                    msg = "This move has already been done";
             }
             while(!is_val_1 || !is_val_2);
 
@@ -320,10 +350,6 @@ void client_handler(int sock)
     char sign;
 
     init_game_field();
-
-    system("clear");
-   
-    cout << " ~ " << "Choose your sign X or O" << " ~ " << endl << endl << "> " << flush;
 
     chose_sign(&sock, &sign);
 

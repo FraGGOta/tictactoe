@@ -145,8 +145,12 @@ void *opt_server_handler(void *socks)
         do 
         {
             recv(curr_sock, &sign, sizeof(sign), 0);
-       
-            if (!(signs.size() % 2))
+            if (sign != 'X' and sign != 'O')
+            {
+                is_avl_sign = false;
+                send(curr_sock, &is_avl_sign, sizeof(is_avl_sign), 0);
+            }
+            else if (!(signs.size() % 2))
             {
                 is_avl_sign = true;
                 signs.push_back(sign);
@@ -267,8 +271,13 @@ void *main_server_handler(void *socks)
     do
     {
         recv(curr_sock, &sign, sizeof(sign), 0);
-
-        if (!(signs.size() % 2))
+        
+        if (sign != 'X' and sign != 'O')
+        {
+            is_avl_sign = false;
+            send(curr_sock, &is_avl_sign, sizeof(is_avl_sign), 0);
+        }
+        else if (!(signs.size() % 2))
         {
             is_avl_sign = true;
             signs.push_back(sign);
