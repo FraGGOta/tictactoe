@@ -8,11 +8,12 @@ int movement;
 
 vector<char> signs;
 
-int main_server_socket_settings(uint16_t port)
+int main_server_socket_settings(char const *id, uint16_t port)
 {
     int listener;
 
     struct sockaddr_in addr;
+    struct hostent *hp;
     
     listener = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -25,7 +26,10 @@ int main_server_socket_settings(uint16_t port)
 
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    
+    hp = gethostbyname(id);
+    
+    bcopy(hp->h_addr, &addr.sin_addr, hp->h_length);
 
     if(bind(listener, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
@@ -38,9 +42,10 @@ int main_server_socket_settings(uint16_t port)
     return listener;
 }
 
-int opt_server_socket_settings(uint16_t port)
+int opt_server_socket_settings(char const *id, uint16_t port)
 {
     struct sockaddr_in addr;
+    struct hostent *hp;
     
     int sock = socket(AF_INET, SOCK_STREAM, 0);
   
@@ -52,7 +57,10 @@ int opt_server_socket_settings(uint16_t port)
 
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    hp = gethostbyname(id);
+    
+    bcopy(hp->h_addr, &addr.sin_addr, hp->h_length);
 
     if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {

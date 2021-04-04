@@ -14,7 +14,7 @@ int main(int argc, char const **argv)
     switch(argc)
     {
         case 1:
-            listener = main_server_socket_settings(MAIN_PORT);
+            listener = main_server_socket_settings(SERV_ID, MAIN_PORT);
 
         	while(1)
             {
@@ -59,11 +59,11 @@ int main(int argc, char const **argv)
 
             if (param == "--opt_serv_1")
             {
-                sock = opt_server_socket_settings(MAIN_PORT);
+                sock = opt_server_socket_settings(SERV_ID, MAIN_PORT);
                 
                 listen_main_server_by_opt_server(sock);
 
-                listener = main_server_socket_settings(MAIN_PORT + 1);
+                listener = main_server_socket_settings(SERV_ID, MAIN_PORT + 1);
 
                 while(1)
                 {
@@ -105,15 +105,15 @@ int main(int argc, char const **argv)
             }
             else if (param == "--opt_serv_2")
             {
-                sock = opt_server_socket_settings(MAIN_PORT);
+                sock = opt_server_socket_settings(SERV_ID, MAIN_PORT);
                 listen_main_server_by_opt_server(sock);
 
-                sock = opt_server_socket_settings(MAIN_PORT + 1);
+                sock = opt_server_socket_settings(SERV_ID, MAIN_PORT + 1);
                 
                 if (sock != -1)
                     listen_main_server_by_opt_server(sock);
 
-                listener = main_server_socket_settings(MAIN_PORT + 2);
+                listener = main_server_socket_settings(SERV_ID, MAIN_PORT + 2);
 
                 while(1)
                 {

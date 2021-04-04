@@ -7,11 +7,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <pthread.h>
 
 using namespace std;
 
 #define MAIN_PORT 3425
+#define SERV_ID "127.0.0.1"
 
 typedef struct sockets
 {
@@ -19,8 +21,8 @@ typedef struct sockets
     vector<int> *opt_servs;
 }sockets;
 
-int main_server_socket_settings(uint16_t port);
-int opt_server_socket_settings(uint16_t port);
+int main_server_socket_settings(char const *id, uint16_t port);
+int opt_server_socket_settings(char const *id, uint16_t port);
 void listen_main_server_by_opt_server(int sock);
 void *opt_server_handler(void *socks);
 void *main_server_handler(void *socks);

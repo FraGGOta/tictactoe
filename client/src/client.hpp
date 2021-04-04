@@ -6,12 +6,15 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 
 using namespace std;
 
 #define MAIN_PORT 3425
+#define LAST_PORT 3427
+#define SERV_ID "127.0.0.1"
 
-int socket_settings(uint16_t port);
+int socket_settings(char const *id, uint16_t port);
 bool check_server(int sock);
 int wait_opponent_move(int *sock, char sign);
 void chose_sign(int *sock, char *sign);

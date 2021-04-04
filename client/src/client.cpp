@@ -2,9 +2,10 @@
 
 char board[3][3];
 
-int socket_settings(uint16_t port)
+int socket_settings(char const *id, uint16_t port)
 {
     struct sockaddr_in addr;
+    struct hostent *hp;
 
 	int sock = socket(AF_INET, SOCK_STREAM, 0);
   
@@ -16,7 +17,10 @@ int socket_settings(uint16_t port)
 
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    hp = gethostbyname(id);
+    
+    bcopy(hp->h_addr, &addr.sin_addr, hp->h_length);
 
     if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {   
@@ -84,20 +88,19 @@ void chose_sign(int *sock, char *sign)
         }
         catch(int)
         { 
-            for (int i = 0; ;++i)
+            for (int i = MAIN_PORT; i <= LAST_PORT; ++i)
             {
-                if(MAIN_PORT + i > 3427)
-                {
-                    perror("All servers aren't acceptable");
-                    exit(2);
-                }
-
                 sleep(2);
                 
-                *sock = socket_settings(MAIN_PORT + i);
+                *sock = socket_settings(SERV_ID, i);
                 
                 if(*sock != -1)
                     break;
+            }
+            if(*sock == -1)
+            {
+                perror("All servers aren't acceptable");
+                exit(2);
             }
         }
     }
@@ -130,23 +133,20 @@ void wait_opponent_sign(int *sock, char sign)
            break;
         }
         catch(int)
-        {
-            for (int i = 0; ;++i)
+        { 
+            for (int i = MAIN_PORT; i <= LAST_PORT; ++i)
             {
-                if(MAIN_PORT + i > 3427)
-                {
-                    perror("All servers aren't acceptable");
-                    exit(2);
-                }
-
                 sleep(2);
                 
-                *sock = socket_settings(MAIN_PORT + i);
+                *sock = socket_settings(SERV_ID, i);
                 
                 if(*sock != -1)
-                    {
                     break;
-                }
+            }
+            if(*sock == -1)
+            {
+                perror("All servers aren't acceptable");
+                exit(2);
             }
         }
     }
@@ -207,23 +207,21 @@ int wait_opponent_move(int *sock, char sign)
             break;
         }
         catch(int)
-        {
-            for (int i = 0; ;++i)
+        { 
+            for (int i = MAIN_PORT; i <= LAST_PORT; ++i)
             {
-                if(MAIN_PORT + i > 3427)
-                {
-                    perror("All servers aren't acceptable");
-                    exit(2);
-                }
-
                 sleep(2);
                 
-                *sock = socket_settings(MAIN_PORT + i);
+                *sock = socket_settings(SERV_ID, i);
                 
                 if(*sock != -1)
                     break;
             }
- 
+            if(*sock == -1)
+            {
+                perror("All servers aren't acceptable");
+                exit(2);
+            }
         }
     }
 
@@ -298,21 +296,20 @@ void make_move(int *sock, char sign)
             break;
         }
         catch(int)
-        {
-            for (int i = 0; ;++i)
+        { 
+            for (int i = MAIN_PORT; i <= LAST_PORT; ++i)
             {
-                if(MAIN_PORT + i > 3427)
-                {
-                    perror("All servers aren't acceptable");
-                    exit(2);
-                }
-
                 sleep(2);
-            
-                *sock = socket_settings(MAIN_PORT + i);
-            
+                
+                *sock = socket_settings(SERV_ID, i);
+                
                 if(*sock != -1)
                     break;
+            }
+            if(*sock == -1)
+            {
+                perror("All servers aren't acceptable");
+                exit(2);
             }
         }
     }
