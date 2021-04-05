@@ -104,8 +104,6 @@ void listen_current_server(int sock)
 
     char sign;
 
-    init_game_field();
-
     while(1)
     {
         check_client(sock);
@@ -128,7 +126,7 @@ void listen_current_server(int sock)
 
 
 void *opt_server_handler(void *socks)
-{
+{   
     char sign;
 
     int row = -1, col = -1;
@@ -212,9 +210,10 @@ void *opt_server_handler(void *socks)
     }
 
     while(1) 
-    {
+    {    
         bool is_val_1 = false;
         bool is_val_2 = false;
+        
         do 
         {
             check_client(curr_sock);
@@ -250,7 +249,7 @@ void *opt_server_handler(void *socks)
         {    
             for (int i : new_opt_servs)
             {
-                if(dead_socks.find(i) != dead_socks.end())
+                if(dead_socks.find(i) == dead_socks.end())
                 {
                     if(check_listening_server(i))
                     {
@@ -387,10 +386,10 @@ void *main_server_handler(void *socks)
 
         for (int i : new_opt_servs)
         {
-            if(dead_socks.find(i) != dead_socks.end())
+            if(dead_socks.find(i) == dead_socks.end())
             {
                 if(check_listening_server(i))
-                {
+                {   
                     send(i, &row, sizeof(row), 0);
                     send(i, &col, sizeof(col), 0);
                     send(i, &sign, sizeof(sign), 0);

@@ -388,9 +388,9 @@ void client_handler(int sock)
 
 void init_game_field()
 {
-    for(int i = 0 ; i < 3 ; ++i)
+    for(int i = 0; i < 3; ++i)
     {
-        for(int j = 0 ; j < 3 ; ++j)
+        for(int j = 0; j < 3; ++j)
         {
             board[i][j] = ' ';
         }
