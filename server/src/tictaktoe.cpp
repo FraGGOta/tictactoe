@@ -217,11 +217,6 @@ void *opt_server_handler(void *socks)
         bool is_val_2 = false;
         do 
         {
-            while (current_player != sign)
-            {
-                sleep(1);
-            }
-
             check_client(curr_sock);
 
             recv(curr_sock, &row, sizeof(row), 0);     
@@ -272,6 +267,10 @@ void *opt_server_handler(void *socks)
         if (winner != -1)
             break;
     }
+
+    movement = 0;
+
+    init_game_field();
 
     return 0;
 }
@@ -356,12 +355,7 @@ void *main_server_handler(void *socks)
         bool is_val_1 = false;
         bool is_val_2 = false;
         do
-        {
-            while(current_player != sign)
-            {
-                sleep(1);
-            }
-      
+        {  
             check_client(curr_sock);
              
             recv(curr_sock, &row, sizeof(row), 0);
@@ -409,6 +403,10 @@ void *main_server_handler(void *socks)
         if (winner != -1)
             break;
     }
+
+    movement = 0;
+
+    init_game_field();
 
     return 0;
 }
