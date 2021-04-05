@@ -16,6 +16,8 @@ using namespace std;
 #define MAIN_PORT 3425
 #define SERV_ID "127.0.0.1"
 
+extern const char CLIENT_CRASH_MSG;
+
 typedef struct sockets
 {
 	vector<int> *clients;
@@ -31,6 +33,6 @@ bool avalible_cell_validate(int row, int col);
 bool border_validate(int number);
 char game_over_validate(void);
 void init_game_field(void);
-void check_client(int sock);
+bool check_client(int sock, int sock1);
 bool check_listening_server(int sock);
 

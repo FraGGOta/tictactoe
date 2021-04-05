@@ -1,7 +1,12 @@
+#include <signal.h>
 #include "tictaktoe.hpp"
 
 int main(int argc, char const **argv)
-{	
+{
+    struct sigaction sa;
+    sa.sa_handler = SIG_IGN;
+    sigaction(SIGPIPE, &sa, NULL);
+    
     int listener, sock, sock_1;
 
     vector<int> clients;

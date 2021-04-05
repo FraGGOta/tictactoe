@@ -1,5 +1,7 @@
 #include "tictaktoe.hpp"
 
+const char CLIENT_CRASH_MSG = char(0x80);
+
 char board[3][3];
 
 char current_player;
@@ -71,12 +73,17 @@ int client_socket_settings(char const *id, uint16_t port)
     return sock;
 }
 
-void check_client(int sock)
+bool check_client(int sock, int sock1 = -1)
 {
     int status = 1;
 
-    recv(sock, &status, sizeof(status), 0);
+    if (!recv(sock, &status, sizeof(status), 0))
+    {
+        send(sock1, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
+        return false;
+    }
     send(sock, &status, sizeof(status), 0);
+    return true;
 }
 
 bool check_listening_server(int sock)
@@ -151,10 +158,20 @@ void *opt_server_handler(void *socks)
     else if(!(new_clients.size() % 2))
         other_sock = curr_sock - 1;
 
-    recv(curr_sock, &start_game, sizeof(start_game), 0);
+    if (!recv(curr_sock, &start_game, sizeof(start_game), 0))
+    {
+        send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
+        goto opt_serv_fin;
+    }
 
     if (start_game)
-        recv(curr_sock, &sign, sizeof(sign), 0);
+    {
+        if (!recv(curr_sock, &sign, sizeof(sign), 0))
+        {
+            send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
+            goto opt_serv_fin;
+        }
+    }
     
     if (!movement)
         current_player = 'X';
@@ -163,7 +180,12 @@ void *opt_server_handler(void *socks)
     { 
         do 
         {
-            recv(curr_sock, &sign, sizeof(sign), 0);
+            if (!recv(curr_sock, &sign, sizeof(sign), 0))
+            {
+                send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
+                goto opt_serv_fin;
+            }
+
             if (sign != 'X' && sign != 'O')
             {
                 is_avl_sign = false;
@@ -216,13 +238,25 @@ void *opt_server_handler(void *socks)
         
         do 
         {
-            check_client(curr_sock);
+            if (!check_client(curr_sock, other_sock))
+            {
+                send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
+                goto opt_serv_fin;
+            }
 
-            recv(curr_sock, &row, sizeof(row), 0);     
-            recv(curr_sock, &col, sizeof(col), 0);
+            if (!recv(curr_sock, &row, sizeof(row), 0))
+            {
+                send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
+                goto opt_serv_fin;
+            }
+            if (!recv(curr_sock, &col, sizeof(col), 0))
+            {
+                send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
+                goto opt_serv_fin;
+            }
         
             if (row == 0 && col == 0)
-                return 0;
+                goto opt_serv_fin;
             
             is_val_1 = border_validate(row) && border_validate(col);
             is_val_2 = is_val_1 ? avalible_cell_validate(row - 1, col - 1) : true;
@@ -267,10 +301,9 @@ void *opt_server_handler(void *socks)
             break;
     }
 
+opt_serv_fin:
     movement = 0;
-
     init_game_field();
-
     return 0;
 }
 
@@ -298,7 +331,13 @@ void *main_server_handler(void *socks)
 
     do
     {
-        recv(curr_sock, &sign, sizeof(sign), 0);
+        if (!recv(curr_sock, &sign, sizeof(sign), 0))
+        {
+            send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
+            movement = 0;
+            init_game_field();
+            return 0;
+        }
         
         if (sign != 'X' and sign != 'O')
         {
@@ -354,14 +393,22 @@ void *main_server_handler(void *socks)
         bool is_val_1 = false;
         bool is_val_2 = false;
         do
-        {  
-            check_client(curr_sock);
+        {
+            check_client(curr_sock, other_sock);
              
-            recv(curr_sock, &row, sizeof(row), 0);
-            recv(curr_sock, &col, sizeof(col), 0);
+            if (!recv(curr_sock, &row, sizeof(row), 0))
+            {
+                send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
+                goto main_serv_fin;
+            }
+            if (!recv(curr_sock, &col, sizeof(col), 0))
+            {
+                send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
+                goto main_serv_fin;
+            }
 
             if (row == 0 && col == 0)
-                return 0;
+                goto main_serv_fin;
             
             is_val_1 = border_validate(row) && border_validate(col);
             is_val_2 = is_val_1 ? avalible_cell_validate(row - 1, col - 1) : true;
@@ -403,10 +450,9 @@ void *main_server_handler(void *socks)
             break;
     }
 
+main_serv_fin:
     movement = 0;
-
     init_game_field();
-
     return 0;
 }
 

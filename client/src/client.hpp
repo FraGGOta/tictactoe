@@ -14,6 +14,8 @@ using namespace std;
 #define LAST_PORT 3427
 #define SERV_ID "127.0.0.1"
 
+extern const char CLIENT_CRASH_MSG;
+
 int socket_settings(char const *id, uint16_t port);
 bool check_server(int sock);
 int wait_opponent_move(int *sock, char sign);
