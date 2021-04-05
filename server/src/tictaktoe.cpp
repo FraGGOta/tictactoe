@@ -2,7 +2,7 @@
 
 const char CLIENT_CRASH_MSG = char(0x80);
 
-char board[3][3];
+char board[3][3] = {{' ', ' ', ' '}, {' ', ' ', ' '}, {' ', ' ', ' '}};
 
 char current_player;
 
@@ -271,7 +271,7 @@ void *opt_server_handler(void *socks)
         ++movement;
 
         char winner = game_over_validate();
-
+  
         send(curr_sock, &winner, sizeof(winner), 0);
         send(other_sock, &winner, sizeof(winner), 0);
         send(other_sock, &row, sizeof(row), 0);
@@ -329,6 +329,10 @@ void *main_server_handler(void *socks)
     else if(!(new_clients.size() % 2))
         other_sock = curr_sock - 1;
 
+    movement = 0;
+
+    init_game_field();
+    
     do
     {
         if (!recv(curr_sock, &sign, sizeof(sign), 0))
@@ -363,10 +367,6 @@ void *main_server_handler(void *socks)
         }
     }
     while(!is_avl_sign);
-
-    init_game_field();
-
-    movement = 0;
 
     while(signs.size() % 2)
     {
@@ -468,42 +468,45 @@ bool border_validate(int number)
 	if(number >= 1 && number <= 3)
 		return true;
 	else
-		return  false;
+		return false;
 }
 
 char game_over_validate()
 {   
-    if (movement >= 5)
+     if (board[0][0] == board[0][1] && board[0][1] == board[0][2] && board[0][1] != ' ')
+        return board[0][1];
+    else if (board[1][0] == board[1][1] && board[1][1] == board[1][2] && board[1][1] != ' ')
+        return board[1][1];
+    else if (board[2][0] == board[2][1] && board[2][1] == board[2][2] && board[2][1] != ' ')
+        return board[2][1];
+    else if (board[0][0] == board[1][0] && board[1][0] == board[2][0] && board[1][0] != ' ')
+        return board[1][0];
+    else if (board[0][1] == board[1][1] && board[1][1] == board[2][1] && board[1][1] != ' ')
+        return board[1][1];
+    else if (board[0][2] == board[1][2] && board[1][2] == board[2][2] && board[1][2] != ' ')
+        return board[1][2];
+    else if (board[0][0] == board[1][1] && board[1][1] == board[2][2] && board[1][1] != ' ')
+        return board[1][1];
+    else if (board[0][2] == board[1][1] && board[1][1] == board[2][0] && board[1][1] != ' ')
+        return board[1][1];
+
+    for(int i = 0; i < 3; ++i)
     {
-        if (board[0][0] == board[0][1] && board[0][1] == board[0][2] && board[0][1] != ' ')
-            return board[0][1];
-        else if (board[1][0] == board[1][1] && board[1][1] == board[1][2] && board[1][1] != ' ')
-            return board[1][1];
-        else if (board[2][0] == board[2][1] && board[2][1] == board[2][2] && board[2][1] != ' ')
-            return board[2][1];
-        else if (board[0][0] == board[1][0] && board[1][0] == board[2][0] && board[1][0] != ' ')
-            return board[1][0];
-        else if (board[0][1] == board[1][1] && board[1][1] == board[2][1] && board[1][1] != ' ')
-            return board[1][1];
-        else if (board[0][2] == board[1][2] && board[1][2] == board[2][2] && board[1][2] != ' ')
-            return board[1][2];
-        else if (board[0][0] == board[1][1] && board[1][1] == board[2][2] && board[1][1] != ' ')
-            return board[1][1];
-        else if (board[0][2] == board[1][1] && board[1][1] == board[2][0] && board[1][1] != ' ')
-            return board[1][1];
-    }   
+        for(int j = 0; j < 3; ++j)
+        {
+            if (board[i][j] == ' ')
+                return -1;
+        }
+    }
 
-    if (movement == 9)
-        return 0;
-
-    return -1;
+    return 0;
 }
 
 void init_game_field()
 {
-    for(int i = 0 ; i < 3 ; ++i)
+    for(int i = 0; i < 3; ++i)
     {
-        for(int j = 0 ; j < 3 ; ++j)
+        for(int j = 0; j < 3; ++j)
         {
             board[i][j] = ' ';
         }
