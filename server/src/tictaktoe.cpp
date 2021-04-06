@@ -281,14 +281,14 @@ void *opt_server_handler(void *socks)
         send(other_sock, &col, sizeof(col), 0);
 
         if(new_socks.opt_servs != nullptr)   
-            send_msg_to_listening_server(new_opt_servs, row, col, sign, 0);
+            send_msg_to_listening_server(&new_opt_servs, row, col, sign, 0);
 
         if(winner != -1)
             break;
     }
 
 opt_serv_fin:
-    send_msg_to_listening_server(new_opt_servs, row, col, sign, -1);
+    send_msg_to_listening_server(&new_opt_servs, row, col, sign, -1);
     
     init_game_field();
     
@@ -412,23 +412,23 @@ void *main_server_handler(void *socks)
         send(other_sock, &row, sizeof(row), 0);
         send(other_sock, &col, sizeof(col), 0);
 
-        send_msg_to_listening_server(new_opt_servs, row, col, sign, 0);
+        send_msg_to_listening_server(&new_opt_servs, row, col, sign, 0);
 
         if(winner != -1)
             break;
     }
 
 main_serv_fin:
-    send_msg_to_listening_server(new_opt_servs, row, col, sign, -1);
+    send_msg_to_listening_server(&new_opt_servs, row, col, sign, -1);
     
     init_game_field();
     
     return 0;
 }
 
-void send_msg_to_listening_server(vector<int> new_opt_servs, int row, int col, char sign, int flag)
+void send_msg_to_listening_server(vector<int> *new_opt_servs, int row, int col, char sign, int flag)
 {
-    for (int i : new_opt_servs)
+    for (int i : *new_opt_servs)
     {
         if(dead_socks.find(i) == dead_socks.end())
         {
