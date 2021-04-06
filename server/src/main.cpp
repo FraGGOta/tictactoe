@@ -67,7 +67,7 @@ int main(int argc, char const **argv)
                 listener = server_socket_settings(SERV_ID, MAIN_PORT + 1);
                 
                 sock = client_socket_settings(SERV_ID, MAIN_PORT);
-
+          
                 while(opt_servs.size() != 1)
                 {
                    sock_1 = accept(listener, NULL, NULL);

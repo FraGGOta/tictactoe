@@ -4,10 +4,6 @@ const char CLIENT_CRASH_MSG = char(0x80);
 
 char board[3][3] = {{' ', ' ', ' '}, {' ', ' ', ' '}, {' ', ' ', ' '}};
 
-char current_player;
-
-int movement;
-
 vector<char> signs;
 set<int> dead_socks;
 
@@ -73,16 +69,21 @@ int client_socket_settings(char const *id, uint16_t port)
     return sock;
 }
 
-bool check_client(int sock, int sock1 = -1)
+bool check_connection(int sock, int sock1 = -1)
 {
     int status = 1;
 
-    if (!recv(sock, &status, sizeof(status), 0))
+    if(!recv(sock, &status, sizeof(status), 0))
     {
-        send(sock1, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
-        return false;
+        if(sock1 != -1)
+        {
+            send(sock1, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
+            
+            return false;
+        }
     }
     send(sock, &status, sizeof(status), 0);
+    
     return true;
 }
 
@@ -113,19 +114,22 @@ void listen_current_server(int sock)
 
     while(1)
     {
-        check_client(sock);
+        check_connection(sock);
 
         bytes_read = recv(sock, &row, sizeof(row), 0);
 
-        if (!bytes_read)
-        {
+        if(!bytes_read)
             break;
+
+        if(row == -1)
+        {
+            init_game_field();
+            
+            continue;
         }
 
         recv(sock, &col, sizeof(col), 0);
         recv(sock, &sign, sizeof(sign), 0);
-        recv(sock, &movement, sizeof(movement), 0);
-        recv(sock, &current_player, sizeof(current_player), 0);
 
         board[row - 1][col - 1] = sign;
     }
@@ -139,12 +143,14 @@ void *opt_server_handler(void *socks)
     int row = -1, col = -1;
     int start_game = -1;
 
+    int current_player;
+
     sockets new_socks = *(sockets *)socks;
 
     vector<int> new_clients = *new_socks.clients;
     vector<int> new_opt_servs;
 
-    if (new_socks.opt_servs != nullptr)
+    if(new_socks.opt_servs != nullptr)
         new_opt_servs = *new_socks.opt_servs;
 
     int curr_sock = new_clients[new_clients.size() - 1];
@@ -153,51 +159,50 @@ void *opt_server_handler(void *socks)
 
     bool is_avl_sign = false;
 
-    if (new_clients.size() % 2)
+    if(new_clients.size() % 2)
         other_sock = curr_sock + 1;
     else if(!(new_clients.size() % 2))
         other_sock = curr_sock - 1;
 
-    if (!recv(curr_sock, &start_game, sizeof(start_game), 0))
+    if(!recv(curr_sock, &start_game, sizeof(start_game), 0))
     {
         send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
         goto opt_serv_fin;
     }
 
-    if (start_game)
+    if(start_game)
     {
-        if (!recv(curr_sock, &sign, sizeof(sign), 0))
+        if(!recv(curr_sock, &sign, sizeof(sign), 0))
         {
             send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
             goto opt_serv_fin;
         }
     }
-    
-    if (!movement)
+
+    if(!start_game)
+    { 
         current_player = 'X';
 
-    if (!start_game)
-    { 
         do 
         {
-            if (!recv(curr_sock, &sign, sizeof(sign), 0))
+            if(!recv(curr_sock, &sign, sizeof(sign), 0))
             {
                 send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
                 goto opt_serv_fin;
             }
 
-            if (sign != 'X' && sign != 'O')
+            if(sign != 'X' && sign != 'O')
             {
                 is_avl_sign = false;
                 send(curr_sock, &is_avl_sign, sizeof(is_avl_sign), 0);
             }
-            else if (!(signs.size() % 2))
+            else if(!(signs.size() % 2))
             {
                 is_avl_sign = true;
                 signs.push_back(sign);
                 send(curr_sock, &is_avl_sign, sizeof(is_avl_sign), 0);
             }
-            else if (signs[signs.size() - 1] == sign)
+            else if(signs[signs.size() - 1] == sign)
             {
                 is_avl_sign = false;
                 send(curr_sock, &is_avl_sign, sizeof(is_avl_sign), 0);
@@ -222,7 +227,7 @@ void *opt_server_handler(void *socks)
         char not_over = -1;
         send(curr_sock, &not_over, sizeof(not_over), 0); 
         
-        if (sign == current_player)
+        if(sign == current_player)
         {
             char winner = -1;
             send(curr_sock, &winner, sizeof(winner), 0);
@@ -238,24 +243,24 @@ void *opt_server_handler(void *socks)
         
         do 
         {
-            if (!check_client(curr_sock, other_sock))
+            if(!check_connection(curr_sock, other_sock))
             {
                 send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
                 goto opt_serv_fin;
             }
 
-            if (!recv(curr_sock, &row, sizeof(row), 0))
+            if(!recv(curr_sock, &row, sizeof(row), 0))
             {
                 send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
                 goto opt_serv_fin;
             }
-            if (!recv(curr_sock, &col, sizeof(col), 0))
+            if(!recv(curr_sock, &col, sizeof(col), 0))
             {
                 send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
                 goto opt_serv_fin;
             }
         
-            if (row == 0 && col == 0)
+            if(row == 0 && col == 0)
                 goto opt_serv_fin;
             
             is_val_1 = border_validate(row) && border_validate(col);
@@ -268,8 +273,6 @@ void *opt_server_handler(void *socks)
 
         board[row - 1][col - 1] = sign;
 
-        ++movement;
-
         char winner = game_over_validate();
   
         send(curr_sock, &winner, sizeof(winner), 0);
@@ -277,33 +280,18 @@ void *opt_server_handler(void *socks)
         send(other_sock, &row, sizeof(row), 0);
         send(other_sock, &col, sizeof(col), 0);
 
-       current_player = current_player == 'X' ? 'O' : 'X';
+        if(new_socks.opt_servs != nullptr)   
+            send_msg_to_listening_server(new_opt_servs, row, col, sign, 0);
 
-        if(new_socks.opt_servs != nullptr)
-        {    
-            for (int i : new_opt_servs)
-            {
-                if(dead_socks.find(i) == dead_socks.end())
-                {
-                    if(check_listening_server(i))
-                    {
-                        send(i, &row, sizeof(row), 0);
-                        send(i, &col, sizeof(col), 0);
-                        send(i, &sign, sizeof(sign), 0);
-                        send(i, &movement, sizeof(movement), 0);
-                        send(i, &current_player, sizeof(current_player), 0);
-                    }
-                }
-            }
-        }
-
-        if (winner != -1)
+        if(winner != -1)
             break;
     }
 
 opt_serv_fin:
-    movement = 0;
+    send_msg_to_listening_server(new_opt_servs, row, col, sign, -1);
+    
     init_game_field();
+    
     return 0;
 }
 
@@ -311,7 +299,14 @@ void *main_server_handler(void *socks)
 {
     char sign;
 
-    current_player = 'X';
+    int current_player = 'X';
+    int row = -1, col = -1;
+
+    char not_over = -1;
+
+    bool begin_game = true;
+    bool is_avl_sign = false;
+ 
 
     sockets new_socks = *(sockets *)socks;
 
@@ -322,39 +317,33 @@ void *main_server_handler(void *socks)
 
     int other_sock;
 
-    bool is_avl_sign = false;
-
-    if (new_clients.size() % 2)
+    if(new_clients.size() % 2)
         other_sock = curr_sock + 1;
     else if(!(new_clients.size() % 2))
         other_sock = curr_sock - 1;
-
-    movement = 0;
 
     init_game_field();
     
     do
     {
-        if (!recv(curr_sock, &sign, sizeof(sign), 0))
+        if(!recv(curr_sock, &sign, sizeof(sign), 0))
         {
             send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
-            movement = 0;
-            init_game_field();
-            return 0;
+            goto main_serv_fin;
         }
         
-        if (sign != 'X' and sign != 'O')
+        if(sign != 'X' and sign != 'O')
         {
             is_avl_sign = false;
             send(curr_sock, &is_avl_sign, sizeof(is_avl_sign), 0);
         }
-        else if (!(signs.size() % 2))
+        else if(!(signs.size() % 2))
         {
             is_avl_sign = true;
             signs.push_back(sign);
             send(curr_sock, &is_avl_sign, sizeof(is_avl_sign), 0);
         }
-        else if (signs[signs.size() - 1] == sign)
+        else if(signs[signs.size() - 1] == sign)
         {
             is_avl_sign = false;
             send(curr_sock, &is_avl_sign, sizeof(is_avl_sign), 0);
@@ -372,15 +361,11 @@ void *main_server_handler(void *socks)
     {
         sleep(1);
     }
-    bool begin_game = true;
 
     send(curr_sock, &begin_game, sizeof(begin_game), 0);
-
-    char not_over = -1;
     send(curr_sock, &not_over, sizeof(not_over), 0);
     
-    int row = -1, col = -1;
-    if (sign == current_player)
+    if(sign == current_player)
     {
         char winner = -1;
         send(curr_sock, &winner, sizeof(winner), 0);
@@ -394,20 +379,20 @@ void *main_server_handler(void *socks)
         bool is_val_2 = false;
         do
         {
-            check_client(curr_sock, other_sock);
+            check_connection(curr_sock, other_sock);
              
-            if (!recv(curr_sock, &row, sizeof(row), 0))
+            if(!recv(curr_sock, &row, sizeof(row), 0))
             {
                 send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
                 goto main_serv_fin;
             }
-            if (!recv(curr_sock, &col, sizeof(col), 0))
+            if(!recv(curr_sock, &col, sizeof(col), 0))
             {
                 send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
                 goto main_serv_fin;
             }
 
-            if (row == 0 && col == 0)
+            if(row == 0 && col == 0)
                 goto main_serv_fin;
             
             is_val_1 = border_validate(row) && border_validate(col);
@@ -420,8 +405,6 @@ void *main_server_handler(void *socks)
 
         board[row - 1][col - 1] = sign;
 
-        ++movement;
-
         char winner = game_over_validate();
      
         send(curr_sock, &winner, sizeof(winner), 0);
@@ -429,36 +412,44 @@ void *main_server_handler(void *socks)
         send(other_sock, &row, sizeof(row), 0);
         send(other_sock, &col, sizeof(col), 0);
 
-        current_player = current_player == 'X' ? 'O' : 'X';
+        send_msg_to_listening_server(new_opt_servs, row, col, sign, 0);
 
-        for (int i : new_opt_servs)
-        {
-            if(dead_socks.find(i) == dead_socks.end())
-            {
-                if(check_listening_server(i))
-                {   
-                    send(i, &row, sizeof(row), 0);
-                    send(i, &col, sizeof(col), 0);
-                    send(i, &sign, sizeof(sign), 0);
-                    send(i, &movement, sizeof(movement), 0);
-                    send(i, &current_player, sizeof(current_player), 0);
-                }
-            }
-        }
-
-        if (winner != -1)
+        if(winner != -1)
             break;
     }
 
 main_serv_fin:
-    movement = 0;
+    send_msg_to_listening_server(new_opt_servs, row, col, sign, -1);
+    
     init_game_field();
+    
     return 0;
+}
+
+void send_msg_to_listening_server(vector<int> new_opt_servs, int row, int col, char sign, int flag)
+{
+    for (int i : new_opt_servs)
+    {
+        if(dead_socks.find(i) == dead_socks.end())
+        {
+            if(check_listening_server(i))
+            {   
+                if(!flag)
+                {
+                    send(i, &row, sizeof(row), 0);
+                    send(i, &col, sizeof(col), 0);
+                    send(i, &sign, sizeof(sign), 0);
+                }
+                else
+                    send(i, &flag, sizeof(flag), 0); 
+            }
+        }
+    }
 }
 
 bool avalible_cell_validate(int row, int col)
 {
-	if (board[row][col] == 'X' || board[row][col] == 'O')
+	if(board[row][col] == 'X' || board[row][col] == 'O')
 	    return false;
 	return true;
 }
@@ -473,28 +464,28 @@ bool border_validate(int number)
 
 char game_over_validate()
 {   
-     if (board[0][0] == board[0][1] && board[0][1] == board[0][2] && board[0][1] != ' ')
+     if(board[0][0] == board[0][1] && board[0][1] == board[0][2] && board[0][1] != ' ')
         return board[0][1];
-    else if (board[1][0] == board[1][1] && board[1][1] == board[1][2] && board[1][1] != ' ')
+    else if(board[1][0] == board[1][1] && board[1][1] == board[1][2] && board[1][1] != ' ')
         return board[1][1];
-    else if (board[2][0] == board[2][1] && board[2][1] == board[2][2] && board[2][1] != ' ')
+    else if(board[2][0] == board[2][1] && board[2][1] == board[2][2] && board[2][1] != ' ')
         return board[2][1];
-    else if (board[0][0] == board[1][0] && board[1][0] == board[2][0] && board[1][0] != ' ')
+    else if(board[0][0] == board[1][0] && board[1][0] == board[2][0] && board[1][0] != ' ')
         return board[1][0];
-    else if (board[0][1] == board[1][1] && board[1][1] == board[2][1] && board[1][1] != ' ')
+    else if(board[0][1] == board[1][1] && board[1][1] == board[2][1] && board[1][1] != ' ')
         return board[1][1];
-    else if (board[0][2] == board[1][2] && board[1][2] == board[2][2] && board[1][2] != ' ')
+    else if(board[0][2] == board[1][2] && board[1][2] == board[2][2] && board[1][2] != ' ')
         return board[1][2];
-    else if (board[0][0] == board[1][1] && board[1][1] == board[2][2] && board[1][1] != ' ')
+    else if(board[0][0] == board[1][1] && board[1][1] == board[2][2] && board[1][1] != ' ')
         return board[1][1];
-    else if (board[0][2] == board[1][1] && board[1][1] == board[2][0] && board[1][1] != ' ')
+    else if(board[0][2] == board[1][1] && board[1][1] == board[2][0] && board[1][1] != ' ')
         return board[1][1];
 
     for(int i = 0; i < 3; ++i)
     {
         for(int j = 0; j < 3; ++j)
         {
-            if (board[i][j] == ' ')
+            if(board[i][j] == ' ')
                 return -1;
         }
     }

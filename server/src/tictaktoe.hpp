@@ -33,6 +33,7 @@ bool avalible_cell_validate(int row, int col);
 bool border_validate(int number);
 char game_over_validate(void);
 void init_game_field(void);
-bool check_client(int sock, int sock1);
+bool check_connection(int sock, int sock1);
 bool check_listening_server(int sock);
+void send_msg_to_listening_server(vector<int> new_opt_servs, int row, int col, char sign, int flag);
 
