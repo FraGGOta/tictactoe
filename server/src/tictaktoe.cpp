@@ -81,6 +81,8 @@ bool check_connection(int sock, int sock1 = -1)
             
             return false;
         }
+        else
+            return false;
     }
     send(sock, &status, sizeof(status), 0);
     
@@ -107,19 +109,16 @@ bool check_listening_server(int sock)
 
 void listen_current_server(int sock)
 {
-    int bytes_read;
     int row, col;
 
     char sign;
 
     while(1)
     {
-        check_connection(sock);
-
-        bytes_read = recv(sock, &row, sizeof(row), 0);
-
-        if(!bytes_read)
+        if(!check_connection(sock))
             break;
+
+        recv(sock, &row, sizeof(row), 0);
 
         if(row == -1)
         {
@@ -230,6 +229,7 @@ void *opt_server_handler(void *socks)
         if(sign == current_player)
         {
             char winner = -1;
+            
             send(curr_sock, &winner, sizeof(winner), 0);
             send(curr_sock, &row, sizeof(row), 0);
             send(curr_sock, &col, sizeof(col), 0);
@@ -244,10 +244,7 @@ void *opt_server_handler(void *socks)
         do 
         {
             if(!check_connection(curr_sock, other_sock))
-            {
-                send(other_sock, &CLIENT_CRASH_MSG, sizeof(CLIENT_CRASH_MSG), 0);
                 goto opt_serv_fin;
-            }
 
             if(!recv(curr_sock, &row, sizeof(row), 0))
             {
@@ -321,8 +318,6 @@ void *main_server_handler(void *socks)
         other_sock = curr_sock + 1;
     else if(!(new_clients.size() % 2))
         other_sock = curr_sock - 1;
-
-    init_game_field();
     
     do
     {
@@ -368,6 +363,7 @@ void *main_server_handler(void *socks)
     if(sign == current_player)
     {
         char winner = -1;
+        
         send(curr_sock, &winner, sizeof(winner), 0);
         send(curr_sock, &row, sizeof(row), 0);
         send(curr_sock, &col, sizeof(col), 0);
@@ -379,7 +375,8 @@ void *main_server_handler(void *socks)
         bool is_val_2 = false;
         do
         {
-            check_connection(curr_sock, other_sock);
+            if(!check_connection(curr_sock, other_sock))
+                goto main_serv_fin;
              
             if(!recv(curr_sock, &row, sizeof(row), 0))
             {

@@ -39,8 +39,12 @@ bool check_server(int sock)
     send(sock, &status, sizeof(status), 0);
 
     int bytes_read = recv(sock, &status, sizeof(status), 0);
+
     if (CLIENT_CRASH_MSG == char(status))
+     {
+        cout << "Opponent has disconnected from server" << endl;
         exit(0);
+    }
 
     if(!bytes_read)
         return false;
@@ -328,7 +332,7 @@ void make_move(int *sock, char sign)
                     getline(cin, buf);
                     col = buf[0] - '0';
                 }
-           
+            
                 if(!check_server(*sock))
                     throw -1;
 
@@ -343,6 +347,7 @@ void make_move(int *sock, char sign)
             
                 if(!recv(*sock, &is_val_1, sizeof(is_val_1), 0))
                     throw -1;
+
                 if (CLIENT_CRASH_MSG == char(is_val_1))
                 {
                     cout << "Opponent has disconnected from server" << endl;
