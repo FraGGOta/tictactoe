@@ -1,5 +1,5 @@
 #include <signal.h>
-#include "tictaktoe.hpp"
+#include "tictactoe.hpp"
 
 int main(int argc, char const **argv)
 {

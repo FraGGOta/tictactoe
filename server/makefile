@@ -1,17 +1,17 @@
-tictaktoe := bin/tictaktoe
+tictactoe := bin/tictactoe
 CC := g++
 CFLAGS := -Wall
 
-all: $(tictaktoe)
+all: $(tictactoe)
 
-$(tictaktoe): build/main.o build/tictaktoe.o 
-	$(CC) $(CFLAGS) build/main.o build/tictaktoe.o -o $(tictaktoe) -lpthread
+$(tictactoe): build/main.o build/tictactoe.o 
+	$(CC) $(CFLAGS) build/main.o build/tictactoe.o -o $(tictactoe) -lpthread
 
-build/main.o: src/main.cpp src/tictaktoe.hpp
+build/main.o: src/main.cpp src/tictactoe.hpp
 	$(CC) $(CFLAGS) -c src/main.cpp -o build/main.o 
 
-build/tictaktoe.o: src/tictaktoe.cpp src/tictaktoe.hpp
-	$(CC) $(CFLAGS) -c src/tictaktoe.cpp -o build/tictaktoe.o
+build/tictactoe.o: src/tictactoe.cpp src/tictactoe.hpp
+	$(CC) $(CFLAGS) -c src/tictactoe.cpp -o build/tictactoe.o
 
 dir:
 	@mkdir build

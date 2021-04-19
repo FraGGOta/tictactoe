@@ -1,7 +1,7 @@
-# tictactoe
+# Tic-tac-toe
 
 ## description
-  Network tictactoe game application with multiservers supporting
+  Network tic-tac-toe game application with multiservers supporting
   
 ## compilation
   ### server
