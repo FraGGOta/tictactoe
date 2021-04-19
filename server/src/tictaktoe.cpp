@@ -142,7 +142,7 @@ void *opt_server_handler(void *socks)
     int row = -1, col = -1;
     int start_game = -1;
 
-    int current_player;
+    int current_player = 'X';
 
     sockets new_socks = *(sockets *)socks;
 
@@ -180,8 +180,6 @@ void *opt_server_handler(void *socks)
 
     if(!start_game)
     { 
-        current_player = 'X';
-
         do 
         {
             if(!recv(curr_sock, &sign, sizeof(sign), 0))
