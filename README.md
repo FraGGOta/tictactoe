@@ -6,11 +6,11 @@
 ## compilation
   ### server
    #### from server dir:
-    make dir - create directoties
+    make dir - create directories
     make/make all - build server 
   ### client
    #### from client dir: 
-    make dir - create directoties
+    make dir - create directories
     make/make all - build client
     
 ## run program
