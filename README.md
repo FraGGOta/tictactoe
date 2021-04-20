@@ -16,8 +16,8 @@
    #### from server dir:
    #### order is important!
     ./bin/tictactoe - run main server
-    ./bin/tictactoe --opt_serv_1 - first optional server
-    ./bin/tictactoe --opt_serv_2 - second optional server
+    ./bin/tictactoe --opt_serv_1 - run first optional server
+    ./bin/tictactoe --opt_serv_2 - run second optional server
   ### client
    #### from client dir: 
     ./bin/client
