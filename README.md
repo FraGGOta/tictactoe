@@ -5,11 +5,13 @@
   
 ## compilation
   ### server
-   #### from server dir: 
-    make/make all
+   #### from server dir:
+    make dir - create directoties
+    make/make all - build server 
   ### client
    #### from client dir: 
-    make/make all
+    make dir - create directoties
+    make/make all - build client
     
 ## run program
   ### server
@@ -20,5 +22,5 @@
     ./bin/tictactoe --opt_serv_2 - run second optional server
   ### client
    #### from client dir: 
-    ./bin/client
+    ./bin/client - run client
     
